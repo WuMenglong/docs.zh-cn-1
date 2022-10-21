@@ -173,4 +173,4 @@ Flink 连接器 flink-connector-starrocks 支持 Flink 1.14 版本。
 ### 升级注意事项
 
 - 版本号低于 2.0.4 或者 2.1.x 中低于 2.1.6 的用户，升级参考 [StarRocks 升级注意事项](https://forum.starrocks.com/t/topic/2228).
-- 升级后如果碰到问题需要回滚，请在 fe.conf 文件中增加 `ignore_unknown_log_id=true`。这是因为新版本的元数据日志新增了类型，如果不加这个参数，则无法回滚。最好等做完 checkpoint 之后再设置 `ignore_unknown_log_id=false` 并重启 FE，恢复正常配置。
+- 升级后如果碰到问题需要回滚，请在 fe.conf 文件中增加 `ignore_unknown_log_id=true`。这是因为新版本的元数据日志新增的类型，如果不加这个参数，则无法回滚。推荐等做完 checkpoint 之后再设置 `ignore_unknown_log_id=false` 并重启 FE，恢复正常配置。
