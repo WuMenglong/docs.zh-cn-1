@@ -53,7 +53,7 @@ CREATE TABLE IF NOT EXISTS detailDemo (
     id            BIGINT         COMMENT "range [-2^63 + 1 ~ 2^63 - 1]",
     password      LARGEINT       COMMENT "range [-2^127 + 1 ~ 2^127 - 1]",
     name          CHAR(20)       NOT NULL COMMENT "range char(m),m in (1-255) ",
-    profile       VARCHAR(500)   NOT NULL COMMENT "upper limit value 65533 bytes",
+    profile       VARCHAR(500)   NOT NULL COMMENT "upper limit value 1048576 bytes",
     hobby         STRING         NOT NULL COMMENT "upper limit value 65533 bytes",
     leave_time    DATETIME       COMMENT "YYYY-MM-DD HH:MM:SS",
     channel       FLOAT          COMMENT "4 bytes",
