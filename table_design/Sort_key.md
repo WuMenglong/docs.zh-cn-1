@@ -55,7 +55,7 @@ DISTRIBUTED BY HASH(site_id) BUCKETS 10;
 
 ### 聚合模型
 
-创建一个名为 `site_access_aggregate` 的聚合模型表，包含 `site_id`、`city_code`、`user_name` 和 `pv` 四列，其中 `site_id` 和 `city_code` 为排序列。
+创建一个名为 `site_access_aggregate` 的聚合模型表，包含 `site_id`、`city_code`、`user_name` 和 `pv` 四列，其中 `site_id`、`city_code` 和 `user_name` 为排序列。
 
 建表语句如下：
 
@@ -67,7 +67,7 @@ CREATE TABLE site_access_aggregate
     user_name VARCHAR(32) DEFAULT '',
     pv BIGINT SUM DEFAULT '0'
 )
-AGGREGATE KEY(site_id, city_code)
+AGGREGATE KEY(site_id, city_code, user_name)
 DISTRIBUTED BY HASH(site_id) BUCKETS 10;
 ```
 
