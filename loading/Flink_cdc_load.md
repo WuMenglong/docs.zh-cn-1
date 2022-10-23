@@ -85,7 +85,7 @@
       >
       > - 第二个版本号 y.yy 为其支持的 Flink 版本号。
       >
-      > - 第三个版本号 z.zz 为 Flink 支持的 Scala 版本号。如果 Flink 为 1.14 以及之前版本，则需要传入。
+      > - 第三个版本号 z.zz 为 Flink 支持的 Scala 版本号。
 
    由于本文使用 Flink 版本号 1.14.5，Scala 版本号 2.11，因此可以下载 flink-connector-starrocks JAR 包 **1.2.3_flink-1.14_2.11.jar**。
 
