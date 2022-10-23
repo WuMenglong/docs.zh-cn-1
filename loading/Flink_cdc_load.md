@@ -141,7 +141,7 @@
 
    ```Plain
    -- 连接 MySQL
-   mysql -h xxx.xx.xxx.xx -uroot -p xxxxxx
+   mysql -h xxx.xx.xxx.xx -P 3306 -u root -p
 
    -- 检查是否已经开启 MySQL Binlog，`ON`就表示已开启
    mysql> SHOW VARIABLES LIKE 'log_bin'; 
