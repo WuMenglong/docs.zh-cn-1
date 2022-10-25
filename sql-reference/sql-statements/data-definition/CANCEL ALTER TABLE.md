@@ -27,7 +27,7 @@ CANCEL ALTER TABLE ROLLUP FROM [database.]table (jobid,...);
 
 > 说明：
 >
-> * CANCEL ALTER 命令无法撤销状态为 PENDING 的 Schema Change 任务。假设 ALTER 任务由于某些原因卡在 PENDING 状态，目前需要等待任务超时（ALTER 任务超时参数为 fe.conf `alter_table_timeout_second`，默认值为 86400 秒）。
+> * CANCEL ALTER 命令无法撤销状态为 PENDING 的 Schema Change 任务。假设 ALTER 任务由于某些原因卡在 PENDING 状态，目前需要等待任务超时。
 
 ## 示例
 
