@@ -4,8 +4,6 @@
 
 该语句用于撤销一个执行中的 ALTER 操作。
 
-
-
 ## 语法
 
 1、撤销 ALTER TABLE COLUMN 操作：
@@ -31,8 +29,6 @@ CANCEL ALTER TABLE ROLLUP FROM [database.]table (jobid,...);
 >
 > * CANCEL ALTER 命令无法撤销状态为 PENDING 的 Schema Change 任务。假设 ALTER 任务由于某些原因卡在 PENDING 状态，目前需要等待任务超时（ALTER 任务超时参数为 fe.conf `alter_table_timeout_second`，默认值为 86400 秒）。
 
-
-
 ## 示例
 
 1、撤销针对 `example_db.table1` 的 ALTER COLUMN 操作：
@@ -52,4 +48,3 @@ CANCEL ALTER TABLE ROLLUP FROM example_db.table2;
 ```sql
 CANCEL ALTER TABLE ROLLUP FROM example_db.table3 (12138,12333);
 ```
-
