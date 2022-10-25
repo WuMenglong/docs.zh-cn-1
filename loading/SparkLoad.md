@@ -107,6 +107,7 @@ PROPERTIES
 `spark0,spark1,spark2` 为 StarRocks 中配置的 Spark 资源的名字。
 
 PROPERTIES 是 Spark 资源相关参数，如下：
+
 * `type`：资源类型，必填，目前仅支持 spark。
 * `spark.master`: 必填，目前支持 yarn。
 * `spark.submit.deployMode`: Spark 程序的部署模式，必填，支持 cluster，client 两种。
