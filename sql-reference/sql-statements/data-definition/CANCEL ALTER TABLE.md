@@ -25,10 +25,6 @@ CANCEL ALTER TABLE ROLLUP FROM [database.]table (jobid,...);
 --注意：该命令为异步操作，具体是否执行成功需要使用`show alter table rollup`查看任务状态确认。
 ```
 
-> 说明：
->
-> * CANCEL ALTER 命令无法撤销状态为 PENDING 的 Schema Change 任务。假设 ALTER 任务由于某些原因卡在 PENDING 状态，目前需要等待任务超时。
-
 ## 示例
 
 1、撤销针对 `example_db.table1` 的 ALTER COLUMN 操作：
