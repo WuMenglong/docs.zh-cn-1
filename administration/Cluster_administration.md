@@ -209,7 +209,7 @@ cp -r /tmp/StarRocks-SE-x.x.x/be/bin  .
 逐台重启 BE 节点。
 
 ```shell
-sh bin/stop_be.sh
+sh bin.bak/stop_be.sh
 sh bin/start_be.sh --daemon
 ```
 
@@ -259,7 +259,7 @@ cp -r /tmp/StarRocks-SE-x.x.x/fe/bin  .
 逐台重启 FE 节点。
 
 ```shell
-sh bin/stop_fe.sh
+sh bin.bak/stop_fe.sh
 sh bin/start_fe.sh --daemon
 ```
 
@@ -274,10 +274,11 @@ ps aux | grep StarRocksFE
 由于 CN 节点是无状态的，因此，只需要替换二进制文件，然后重新启动进程即可，推荐使用 graceful 的停止方式。
 
 ```shell
-sh bin/stop_cn.sh --graceful
+sh bin.bak/stop_cn.sh --graceful
+sh bin/start_cn.sh --daemon
 ```
 
-使用该种方式停止，CN会等待当前运行的任务运行结束后再退出进程
+使用该种方式停止，CN会等待当前运行的任务运行结束后再退出进程。
 
 ### 升级 Broker
 
@@ -294,15 +295,12 @@ cp -r /tmp/StarRocks-SE-x.x.x/apache_hdfs_broker/bin  .
 运行命令重启 Broker。
 
 ```shell
-sh bin/stop_broker.sh
+sh bin.bak/stop_broker.sh
 sh bin/start_broker.sh --daemon
 ```
 
 在启动下一台实例之前，您需要确认当前实例启动成功。
 
-```shell
-sh bin/start_broker.sh --daemon
-```
 
 ### 关于 StarRocks 1.19 升级至 2.0.x
 
@@ -378,7 +376,7 @@ mv bin.bak bin
 逐台重启 FE 节点。
 
 ```shell
-sh bin/stop_fe.sh
+sh bintmp.bak/stop_fe.sh
 sh bin/start_fe.sh --daemon
 ```
 
@@ -425,7 +423,7 @@ mv bin.bak bin
 逐台重启 BE 节点。
 
 ```shell
-sh bin/stop_be.sh
+sh bintmp.bak/stop_be.sh
 sh bin/start_be.sh --daemon
 ```
 
@@ -450,7 +448,7 @@ mv bin.bak bin
 逐台重启 BE 节点。
 
 ```shell
-sh bin/stop_broker.sh
+sh bintmp.bak/stop_broker.sh
 sh bin/start_broker.sh --daemon
 ```
 
