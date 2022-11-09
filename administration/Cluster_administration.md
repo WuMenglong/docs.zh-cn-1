@@ -301,7 +301,6 @@ sh bin/start_broker.sh --daemon
 
 在启动下一台实例之前，您需要确认当前实例启动成功。
 
-
 ### 关于 StarRocks 1.19 升级至 2.0.x
 
 如果您需要将 StarRocks 1.19 升级至 2.0.x，您必须在升级过程中关闭 Clone 以避免触发旧版本中的 Bug。该操作同样适用于从 StarRocks 2.1.5 或之前版本升级至 2.1.6 或之后版本。
