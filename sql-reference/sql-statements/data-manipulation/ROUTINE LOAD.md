@@ -418,7 +418,6 @@ PARTITION p20200510 VALUES [("20200510"), ("20200511")),
 PARTITION p20200511 VALUES [("20200511"), ("20200512")))
 DISTRIBUTED BY HASH(`category`,`author`,`timestamp`) BUCKETS 4
 PROPERTIES (
-    "storage_type" = "COLUMN",
     "replication_num" = "1"
 );
 
