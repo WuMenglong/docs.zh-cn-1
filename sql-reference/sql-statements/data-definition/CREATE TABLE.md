@@ -402,8 +402,7 @@ CREATE TABLE example_db.table_hash
 ENGINE = olap
 AGGREGATE KEY(k1, k2)
 COMMENT "my first starrocks table"
-DISTRIBUTED BY HASH(k1) BUCKETS 10
-PROPERTIES ("storage_type" = "column");
+DISTRIBUTED BY HASH(k1) BUCKETS 10;
 ```
 
 ### 创建表并设置存储介质和数据降冷时间
@@ -422,7 +421,6 @@ ENGINE = olap
 UNIQUE KEY(k1, k2)
 DISTRIBUTED BY HASH (k1, k2) BUCKETS 10
 PROPERTIES(
-    "storage_type" = "column",
     "storage_medium" = "SSD",
     "storage_cooldown_time" = "2025-06-04 00:00:00"
 );
@@ -442,7 +440,6 @@ ENGINE = olap
 PRIMARY KEY(k1, k2)
 DISTRIBUTED BY HASH (k1, k2) BUCKETS 10
 PROPERTIES(
-    "storage_type" = "column",
     "storage_medium" = "SSD",
     "storage_cooldown_time" = "2025-06-04 00:00:00"
 );
@@ -547,8 +544,7 @@ CREATE TABLE example_db.example_table
 )
 ENGINE = olap
 AGGREGATE KEY(k1, k2)
-DISTRIBUTED BY HASH(k1) BUCKETS 10
-PROPERTIES ("storage_type" = "column");
+DISTRIBUTED BY HASH(k1) BUCKETS 10;
 ```
 
 ### 创建一张含有 `BITMAP_UNION` 聚合类型的表
@@ -565,8 +561,7 @@ CREATE TABLE example_db.example_table
 )
 ENGINE = olap
 AGGREGATE KEY(k1, k2)
-DISTRIBUTED BY HASH(k1) BUCKETS 10
-PROPERTIES ("storage_type" = "column");
+DISTRIBUTED BY HASH(k1) BUCKETS 10;
 ```
 
 ### 创建两张支持 Colocate Join 的表
@@ -609,8 +604,7 @@ CREATE TABLE example_db.table_hash
 ENGINE = olap
 AGGREGATE KEY(k1, k2)
 COMMENT "my first starrocks table"
-DISTRIBUTED BY HASH(k1) BUCKETS 10
-PROPERTIES ("storage_type" = "column");
+DISTRIBUTED BY HASH(k1) BUCKETS 10;
 ```
 
 ### 创建动态分区表
