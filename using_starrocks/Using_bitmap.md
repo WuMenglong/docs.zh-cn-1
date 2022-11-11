@@ -112,7 +112,7 @@ mysql> select page_id, count(distinct visit_users) from page_uv group by page_id
 Trie 树又叫前缀树或字典树。Trie 树中节点的后代存在共同的前缀，系统可以利用字符串的公共前缀来减少查询时间，从而最大限度地减少字符串比较。因此，基于 Trie 树构建全局字典的方式适合用于实现字典编码。但基于 Trie 树的全局字典实现难以分布式化，在数据量比较大的时候会产生性能瓶颈。
 通过构建全局字典，将其他类型的数据转换成为整型数据，就可以利用 Bitmap 对非整型数据列进行精确去重分析了。
 
-## 传统 Count_distinct 计算
+## 传统 Count distinct 计算
 
 StarRocks 是基于 MPP 架构实现的，在使用 count distinct 做精准去重时，可以保留明细数据，灵活性较高。但是，由于在查询执行的过程中需要进行多次数据 shuffle（不同节点间传输数据，计算去重），会导致性能随着数据量增大而直线下降。
 
