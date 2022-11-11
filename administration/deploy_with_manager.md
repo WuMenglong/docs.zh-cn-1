@@ -11,9 +11,9 @@
 |依赖|说明|
 |----|----|
 |JDK（1.8 或以上）|下载完成后，您需要在 FE 节点配置文件 **fe.conf** 中的 `JAVA_HOME` 配置项下指定 JDK 的安装路径。|
-|Python（2.7 或以上）| |
+|Python（2.7 或以上）|Linux操作系统自带的 Python 2 版本已满足 Manager 部署要求。 |
 |python-setuptools|您可以通过 `yum install setuptools` 或 `apt-get install setuptools` 安装。|
-|MySQL（5.5 或以上）|您需要通过 MySQL 存储 StarRocksManager 平台的数据。|
+|MySQL（5.5 或以上）|您需要通过 MySQL 存储 StarRocks Manager 平台的数据。|
 
 ## 安装 StarRocks Manager
 
