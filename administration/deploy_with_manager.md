@@ -6,11 +6,10 @@
 
 ## 前提条件
 
-您需要在所有拟部署 StarRocks 的节点上安装以下依赖:
+您需要在所有拟部署 StarRocks 的节点上安装以下依赖：
 
 |依赖|说明|
 |----|----|
-|JDK（1.8 或以上）|下载完成后，您需要在 FE 节点配置文件 **fe.conf** 中的 `JAVA_HOME` 配置项下指定 JDK 的安装路径。|
 |Python（2.7 或以上）| |
 |python-setuptools|您可以通过 `yum install setuptools` 或 `apt-get install setuptools` 安装。|
 |MySQL（5.5 或以上）|您需要通过 MySQL 存储 StarRocksManager 平台的数据。|
