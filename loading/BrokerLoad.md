@@ -267,7 +267,7 @@ WITH BROKER "mybroker"
 
 > **说明**
 >
-> 从华为云 OBS 导入数据时，需要先下载[依赖库](https://github.com/huaweicloud/obsa-hdfs/releases/download/v45/hadoop-huaweicloud-2.8.3-hw-45.jar)并添加到 $BROKER_HOME/lib/ 路径下中并重启 Broker。
+> 从华为云 OBS 导入数据时，需要先下载[依赖库](https://github.com/huaweicloud/obsa-hdfs/releases/download/v45/hadoop-huaweicloud-2.8.3-hw-45.jar)添加到 $BROKER_HOME/lib/ 路径下并重启 Broker。
 
 ### 查询数据
 
