@@ -40,6 +40,8 @@ Broker Load 支持从如下外部存储系统导入数据：
 
 - 腾讯云 COS
 
+- 华为云 OBS
+
 ## 前提条件
 
 确保您的 StarRocks 集群中已部署 Broker。
@@ -239,6 +241,33 @@ WITH BROKER "mybroker"
     "fs.cosn.bucket.endpoint_suffix" = "cos.ap-beijing.myqcloud.com"
 )
 ```
+
+#### 从 华为云 OBS 导入
+
+可以通过如下语句，把华为云 OBS 存储空间 `bucket_obs` 里 `/input/` 文件夹内的 CSV 文件 `file1.csv` 和 `file2.csv` 分别导入到 StarRocks 表 `table1` 和 `table2` 中：
+
+```SQL
+LOAD LABEL test_db.label6
+(
+    DATA INFILE("obs://bucket_obs/input/file1.csv")
+    INTO TABLE table1
+    (id, name, score)
+    
+    DATA INFILE("obs://bucket_obs/input/file2.csv")
+    INTO TABLE table2
+    (id, city)
+)
+WITH BROKER "mybroker"
+(
+    "fs.obs.access.key" = "xxxxxxxxxxxxxxxxxxxxxxxxxx",
+    "fs.obs.secret.key" = "yyyyyyyyyyyyyyyyyyyy",
+    "fs.obs.endpoint" = "obs.cn-east-3.myhuaweicloud.com"
+)
+```
+
+> **说明**
+>
+> 从华为云 OBS 导入数据时，需要先下载[依赖库](https://github.com/huaweicloud/obsa-hdfs/releases/download/v45/hadoop-huaweicloud-2.8.3-hw-45.jar)并添加到 $BROKER_HOME/lib/ 路径下中并重启 Broker。
 
 ### 查询数据
 
