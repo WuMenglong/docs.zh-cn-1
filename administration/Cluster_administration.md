@@ -39,7 +39,7 @@ sh bin/start_fe.sh --daemon
 
 ```shell
 cd StarRocks-x.x.x/fe
-sh bin/start_fe.sh --helper Leader_FE_IP:edit_log_port --daemon
+sh bin/start_fe.sh --helper <Leader_FE_IP>:<edit_log_port> --daemon
 ```
 
 > 注意
