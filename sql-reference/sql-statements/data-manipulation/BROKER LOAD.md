@@ -32,7 +32,7 @@ WITH BROKER "<broker_name>"
 
 用于描述一批次待导入的数据。每个 `data_desc` 声明了本批次待导入数据所属的数据源地址、ETL 函数、StarRocks 表和分区等信息。
 
-Broker Load 支持一次导入多个数据文件。在一个导入作业中，您可以使用多个 `data_desc` 来声明导入多个数据文件，也可以使用一个 `data_desc` 来声明导入一个路径下的所有数据文件。Broker Load 支持一次导入多个数据文件，并且能够保证单次导入事务的原子性，即单次导入的多个数据文件都成功或者都失败，而不会出现部分导入成功、部分导入失败的情况。
+Broker Load 支持一次导入多个数据文件。在一个导入作业中，您可以使用多个 `data_desc` 来声明导入多个数据文件，也可以使用一个 `data_desc` 来声明导入一个路径下的所有数据文件。Broker Load 还支持保证单次导入事务的原子性，即单次导入的多个数据文件都成功或者都失败，而不会出现部分导入成功、部分导入失败的情况。
 
 `data_desc` 语法如下：
 
@@ -53,13 +53,19 @@ INTO TABLE <table_name>
 
 - `file_path`
 
-  用于指定待导入数据文件所在的路径。您可以指定导入一个具体的数据文件，也可以用通配符指定导入某个路径下所有的数据文件。中间的目录也可以使用通配符匹配。Broker Load 支持如下通配符：`?`、`*`、`[]`、`{}` 和 `^`。具体请参见[通配符使用规则参考](https://hadoop.apache.org/docs/stable/api/org/apache/hadoop/fs/FileSystem.html#globStatus-org.apache.hadoop.fs.Path-)。
+  用于指定待导入数据文件所在的路径。
 
-  例如， 通过指定 `"hdfs://<hdfs_host>:<hdfs_port>/user/data/tablename/*/*"` 路径可以匹配 `/user/data/tablename` 目录下所有分区内的数据文件，通过 `"hdfs://<hdfs_host>:<hdfs_port>/user/data/tablename/dt=202104*/*"` 路径可以匹配 `/user/data/tablename` 目录下所有 `202104` 分区内的数据文件。
+  您可以指定导入一个具体的数据文件。例如，通过指定 `"hdfs://<hdfs_host>:<hdfs_port>/user/data/tablename/20210411"` 可以匹配 HDFS 服务器上 `/user/data/tablename` 目录下名为 `20210411` 的数据文件。
 
-  文件路径中的 `<hdfs_host>` 和 `hdfs_port` 参数说明如下：
+  您也可以用通配符指定导入某个路径下所有的数据文件。Broker Load 支持如下通配符：`?`、`*`、`[]`、`{}` 和 `^`。具体请参见[通配符使用规则参考](https://hadoop.apache.org/docs/stable/api/org/apache/hadoop/fs/FileSystem.html#globStatus-org.apache.hadoop.fs.Path-)。例如， 通过指定 `"hdfs://<hdfs_host>:<hdfs_port>/user/data/tablename/*/*"` 路径可以匹配 HDFS 服务器上 `/user/data/tablename` 目录下所有分区内的数据文件，通过 `"hdfs://<hdfs_host>:<hdfs_port>/user/data/tablename/dt=202104*/*"` 路径可以匹配 HDFS 服务器上 `/user/data/tablename` 目录下所有 `202104` 分区内的数据文件。
 
-  - `<hdfs_host>`：HDFS 集群中 NameNode 所在主机的 IP 地址。
+  > **说明**
+  >
+  > 中间的目录也可以使用通配符匹配。
+
+  以 HDFS 数据源为例，文件路径中的 `hdfs_host` 和 `hdfs_port` 参数说明如下：
+
+  - `hdfs_host`：HDFS 集群中 NameNode 所在主机的 IP 地址。
   - `hdfs_port`：HDFS 集群中 NameNode 所在主机的 FS 端口。默认端口号为 `9000`。
 
 - `INTO TABLE`
@@ -106,9 +112,9 @@ INTO TABLE <table_name>
 
 - `COLUMNS FROM PATH AS`
 
-  用于从指定的文件路径中提取一个或多个分区字段的信息。当指定的文件路径中存在分区字段时，允许使用 `COLUMNS FROM PATH AS` 参数指定要提取文件路径中哪些分区字段的信息。
+  用于从指定的文件路径中提取一个或多个分区字段的信息。该参数仅当指定的文件路径中存在分区字段时有效。
 
-  例如，待导入数据文件所在的路径为 `/path/col_name=col_value/file1`，其中 `col_name` 可以对应到 StarRocks 表中的列，因此导入时会将 `col_value` 落入 `col_name` 对应的列中。
+  例如，待导入数据文件所在的路径为 `/path/col_name=col_value/file1`，其中 `col_name` 可以对应到 StarRocks 表中的列。这时候，您可以设置参数为 `col_name`。导入时，StarRocks 会将 `col_value` 落入 `col_name` 对应的列中。
 
   > **说明**
   >
