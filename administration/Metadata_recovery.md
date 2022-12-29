@@ -15,7 +15,7 @@
 > - **请务必清空除了恢复节点（即以下操作中选出来的元数据最新的节点）以外其他节点的元数据目录，否则可能导致节点错乱。**
 > - **下述方法无法解决根本问题，仅作为尽快恢复集群运行应急操作。如需彻底修复问题，请联系官方人员协助。**
 
-手动恢复 FE 的原理为先通过当前 `meta_dir` 中留存的元数据启动一个新的 Master 节点，然后逐台添加其他 FE 节点。
+手动恢复 FE 的原理为先通过当前 `meta_dir` 中留存的元数据启动一个新的 Leader 节点，然后逐台添加其他 FE 节点。
 
 请严格按照如下步骤操作。
 
@@ -35,7 +35,7 @@ meta_dir = /home/disk1/sr/StarRocks-1.19.0/fe-3365df09-14bc-44a5-aabc-ccfaa5824d
 
 ![8-2](../assets/8-2.png)
 
-通常情况下，FE Leader 节点的元数据为最新。
+通常情况下，Leader FE 节点的元数据为最新。
 
 为确保获取元数据最新的节点，您需要切换到各 FE 节点安装目录下，执行以下操作获取 lastVLSN，该值越大则该节点元数据越新。
 
@@ -59,7 +59,8 @@ java -jar lib/je-7.3.7.jar DbPrintLog -h meta/bdb/ -vd
 
 > 注意：确认恢复节点角色后，您需要基于当前 FE 节点进行恢复。我们建议您优先选择 FOLLOWER 节点进行恢复。
 
-如果恢复的节点的 role 为 FOLLOWER，请参考[基于 FOLLOWER 节点恢复](#基于-follower-节点恢复)，如果恢复的节点的role为 OBSERVER，请参考[基于 OBSERVER 节点恢复](#基于-observer-节点恢复)。
+- 如果恢复的节点的 role 为 FOLLOWER，请参考[基于 FOLLOWER 节点恢复](#基于-follower-节点恢复)。
+- 如果恢复的节点的 role 为 OBSERVER，请参考[基于 OBSERVER 节点恢复](#基于-observer-节点恢复)。
 
 ## 基于 FOLLOWER 节点恢复
 
@@ -160,7 +161,13 @@ java -jar lib/je-7.3.7.jar DbPrintLog -h meta/bdb/ -vd
 ALTER SYSTEM DROP FOLLOWER/OBSERVER;
 ```
 
-然后通过加入全新 FE 的方式重新添加各 FE 节点。
+然后您需要将恢复节点的 **/fe/meta/** 备份，然后清空该目录。
+
+```shell
+rm -rf meta/*
+```
+
+最后通过加入全新 FE 的方式重新添加各 FE 节点。
 
 ```shell
 bin/start_fe.sh --helper "fe_host:edit_log_port" --daemon

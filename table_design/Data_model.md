@@ -34,14 +34,14 @@ StarRocks 中的排序键，相对于传统的主键，具有如下特点：
 
 - 如果导入的数据存在重复的主键，则数据导入至数据模型，存储在 StarRocks 时，则会按照如下方式进行处理：
   - 明细模型：表中会存在主键重复的数据行，并且与导入的数据是完全对应的。您可以召回所导入的全部历史数据。
-  - 聚合模型：表中不存在主键重复的数据行，主键满足唯一性约束。导入的数据中主键重复的数据行聚合为一行，即具有相同主键的指标列，会通过聚合函数进行聚合。您可以召回导入的全部历史数据的聚合结果，但是无法召回全部历史数据。
+  - 聚合模型：表中不存在主键重复的数据行，主键满足唯一性约束。导入的数据中主键重复的数据行聚合为一行，即具有相同主键的指标列，会通过聚合函数进行聚合。您只能召回导入的全部历史数据的聚合结果，但是无法召回历史明细数据。
   - 主键模型和更新模型：表中不存在主键重复的数据行，主键满足唯一性约束。最新导入的数据行，替换掉其他主键重复的数据行。这两种模型可以视为聚合模型的特殊情况，相当于在聚合模型中，为表的指标列指定聚合函数为 REPLACE，REPLACE 函数返回主键相同的一组数据中的最新数据。
 
 ## 明细模型
 
-明细模型是默认的建表模型。
+明细模型是默认的建表模型。如果在建表时未指定任何模型，默认创建的是明细类型的表。
 
-创建表时，支持定义排序键。如果查询的过滤条件包含排序键，则 StarRocks 能够快速地过滤数据，提高查询效率。明细模型适用于分析日志数据等，支持追加新数据，不支持修改历史数据。
+创建表时，支持定义排序键。如果查询的过滤条件包含排序键，则 StarRocks 能够快速地过滤数据，提高查询效率。明细模型适用于日志数据分析等场景，支持追加新数据，不支持修改历史数据。
 
 ### 适用场景
 
@@ -69,14 +69,14 @@ DUPLICATE KEY(event_time, event_type)
 DISTRIBUTED BY HASH(user_id) BUCKETS 8;
 ```
 
-> 建表时必须使用 `DISTRIBUTED BY HASH` 子句指定分桶键。分桶键的更多说明，请参见[分桶](Data_distribution.md/#分桶)。
+> 建表时必须使用 `DISTRIBUTED BY HASH` 子句指定分桶键，否则建表失败。分桶键的更多说明，请参见[分桶](Data_distribution.md/#分桶)。
 
 ### 使用说明
 
 - 排序键的相关说明：
   - 在建表语句中，排序键必须定义在其他列之前。
   - 排序键可以通过 `DUPLICATE KEY` 显式定义。本示例中排序键为`event_time`和`event_type`。
-    > 如果未指定，则默认选择表的前三列作为排序键。
+    > 如果未指定，则默认选择表的**前三列**作为排序键。
 
   - 明细模型中的排序键可以为部分或全部维度列。
 
@@ -115,11 +115,11 @@ DISTRIBUTED BY HASH(user_id) BUCKETS 8;
 
 从数据导入至数据查询阶段，聚合模型内部同一排序键的数据会多次聚合，聚合的具体时机和机制如下：
 
-1. 数据导入阶段：数据按批次导入至聚合模型时，每一个批次的数据形成一个版本，在一个版本中，同一排序键的数据会进行一次聚合。
+1. 数据导入阶段：数据按批次导入至聚合模型时，每一个批次的数据形成一个版本。在一个版本中，同一排序键的数据会进行一次聚合。
 
-1. 后台文件合并阶段 (Compaction) ：数据分批次多次导入至聚合模型中，会生成多个版本的文件，多个版本的文件定期合并成一个大版本文件时，同一排序键的数据会进行一次聚合。
+2. 后台文件合并阶段 (Compaction) ：数据分批次多次导入至聚合模型中，会生成多个版本的文件，多个版本的文件定期合并成一个大版本文件时，同一排序键的数据会进行一次聚合。
 
-1. 查询阶段：所有版本中同一排序键的数据进行聚合，然后返回查询结果。
+3. 查询阶段：所有版本中同一排序键的数据进行聚合，然后返回查询结果。
 
 因此，聚合模型中数据多次聚合，能够减少查询时所需要的处理的数据量，进而提升查询的效率。
 
@@ -152,6 +152,7 @@ CREATE TABLE IF NOT EXISTS example_db.aggregate_tbl (
     city_code VARCHAR(20) COMMENT "city_code of user",
     pv BIGINT SUM DEFAULT "0" COMMENT "total page views"
 )
+AGGREGATE KEY(site_id, date, city_code)
 DISTRIBUTED BY HASH(site_id) BUCKETS 8;
 ```
 
@@ -160,7 +161,7 @@ DISTRIBUTED BY HASH(site_id) BUCKETS 8;
 ### 使用说明
 
 - 排序键的相关说明：
-  - 在建表语句中，排序键必须定义在其他列之前。
+  - 在建表语句中，**排序键必须定义在其他列之前**。
   - 排序键可以通过 `AGGREGATE KEY` 显式定义。
 
     > - 如果 `AGGREGATE KEY` 未包含全部维度列（除指标列之外的列），则建表会失败。
@@ -331,8 +332,7 @@ create table users (
     property0 tinyint NOT NULL,
     property1 tinyint NOT NULL,
     property2 tinyint NOT NULL,
-    property3 tinyint NOT NULL,
-    ....
+    property3 tinyint NOT NULL
 ) PRIMARY KEY (user_id)
 DISTRIBUTED BY HASH(user_id) BUCKETS 4
 PROPERTIES("replication_num" = "3",
@@ -364,9 +364,9 @@ PROPERTIES("replication_num" = "3",
 
 - 创建表时，支持为指标列创建 BITMAP、Bloom Filter 等索引。
 
-- 主键模型目前不支持物化视图。
+- 自 2.4.0 版本起，主键模型支持单表和多表物化视图。
 
-- 暂不支持使用 ALTER TABLE 修改列类型。 ALTER TABLE 的相关语法说明和示例，请参见 [ALTER TABLE](../sql-reference/sql-statements/data-definition/ALTER%20TABLE.md)。
+- 使用 [ALTER TABLE](../sql-reference/sql-statements/data-definition/ALTER%20TABLE.md) 时暂不支持修改主键的列类型，不支持调整指标列的顺序。
 
 ### 下一步
 

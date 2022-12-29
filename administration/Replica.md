@@ -2,6 +2,10 @@
 
 本文介绍如何管理 StarRocks 中的数据副本 (replica)。
 
+> **注意**
+>
+> 为保证元数据一致，您需要在 Leader FE 节点进行副本管理操作。
+
 ## 修复副本
 
 TabletChecker 作为常驻的后台进程，会定期检查所有分片的状态。对于非健康状态的分片，将会交给 TabletScheduler 进行调度和修复。修复的实际操作，都由 BE 节点上的 Clone 任务完成。FE 节点只负责生成这些 Clone 任务。
@@ -37,7 +41,7 @@ TabletChecker 作为常驻的后台进程，会定期检查所有分片的状态
     * `UnhealthyTabletNum` 列显示了对应的 Database 中，有多少 Tablet 处于非健康状态。
     * `InconsistentTabletNum` 列显示了对应的 Database 中，有多少 Tablet 处于副本不一致的状态。
 
-    `Total` 行对整个集群进行了统计。正常情况下 `UnhealthyTabletNum` 和 `InconsistentTabletNum` 应为0。如果不为零，可以进一步查看具体有哪些 Tablet。如上图中，UM_TEST 数据库有 1 个 Tablet 状态不健康。
+    `Total` 行对整个集群进行了统计。正常情况下 `UnhealthyTabletNum` 和 `InconsistentTabletNum` 应为 0。如果不为零，可以进一步查看具体有哪些 Tablet。如上图中，UM_TEST 数据库有 1 个 Tablet 状态不健康。
 
     您可以通过一下命令查询状态不健康的 Tablet。
 
@@ -175,7 +179,7 @@ TabletScheduler 里等待被调度的分片会根据状态不同，被赋予不�
 ADMIN REPAIR TABLE tbl [PARTITION (p1, p2, ...)];
 ```
 
-> 注意：此命令只是一个 Hint，并不能保证一定能修复成功，且副本的优先级仍会随 TabletScheduler 的调度而发生变化。当 Master FE 节点切换或重启后，该命令所包含的信息会丢失。
+> 注意：此命令只是一个 Hint，并不能保证一定能修复成功，且副本的优先级仍会随 TabletScheduler 的调度而发生变化。当 Leader FE 节点切换或重启后，该命令所包含的信息会丢失。
 
 您也可以通过以下命令取消优先级调度。
 

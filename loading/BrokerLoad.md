@@ -22,6 +22,10 @@ Broker Load 支持如下数据文件格式：
 
 - ORC
 
+> **说明**
+>
+> 对于 CSV 格式的数据，StarRocks 支持设置长度最大不超过 50 个字节的 UTF-8 编码字符串作为列分隔符，包括常见的逗号 (,)、Tab 和 Pipe (|)。
+
 ## 支持的外部存储系统
 
 Broker Load 支持从如下外部存储系统导入数据：
@@ -50,13 +54,15 @@ Broker Load 支持从如下外部存储系统导入数据：
 
 下图展示了 Broker Load 的主要流程：
 
-![Broker Load 原理图](/assets/4.3-1.png)
+![Broker Load 原理图](/assets/4.3-1-zh.png)
 
 ## 基本操作
 
 ### 创建导入作业
 
 这里以导入 CSV 格式的数据为例介绍如何创建导入作业。有关如何导入其他格式的数据、以及 Broker Load 的详细语法和参数说明，请参见 [BROKER LOAD](/sql-reference/sql-statements/data-manipulation/BROKER%20LOAD.md)。
+
+注意在 StarRocks 中，部分文字是 SQL 语言的保留关键字，不能直接用于 SQL 语句。如果想在 SQL 语句中使用这些保留关键字，必须用反引号 (`) 包含起来。参见[关键字](../sql-reference/sql-statements/keywords.md)。
 
 #### 数据样例
 
@@ -118,12 +124,12 @@ LOAD LABEL test_db.label1
     DATA INFILE("hdfs://<hdfs_host>:<hdfs_port>/user/starrocks/file1.csv")
     INTO TABLE table1
     COLUMNS TERMINATED BY ","
-    (id, city)
+    (id, name, score)
 
     DATA INFILE("hdfs://<hdfs_host>:<hdfs_port>/user/starrocks/file2.csv")
     INTO TABLE table2
     COLUMNS TERMINATED BY ","
-    (id, name, score)
+   (id, city)
 )
 WITH BROKER "mybroker"
 (
@@ -145,21 +151,24 @@ LOAD LABEL test_db.label2
 (
     DATA INFILE("s3a://bucket_s3/input/file1.csv")
     INTO TABLE table1
-    (id, city)
+    (id, name, score)
     
     DATA INFILE("s3a://bucket_s3/input/file2.csv")
     INTO TABLE table2
-    (id, name, score)
+    (id, city)
 )
 WITH BROKER "mybroker"
 (
     "fs.s3a.access.key" = "xxxxxxxxxxxxxxxxxxxx",
     "fs.s3a.secret.key" = "yyyyyyyyyyyyyyyyyyyy",
-    "fs.s3a.endpoint" = "s3-ap-northeast-1.amazonaws.com"
+    "fs.s3a.endpoint" = "s3.ap-northeast-1.amazonaws.com"
 )
 ```
 
-> 说明：从 Amazon S3 导入数据使用的是 S3A 协议，因此文件路径的前缀必须为 `s3a://`。
+> **说明**
+>
+> - 从 Amazon S3 导入数据使用的是 S3A 协议，因此文件路径的前缀必须为 `s3a://`。
+> - 如果您的 Amazon EC2 实例上绑定的 IAM 角色可以访问您的 Amazon S3 存储空间，那么您不需要提供 `fs.s3a.access.key` 和 `fs.s3a.secret.key` 配置，留空即可。
 
 #### 从 Google GCS 导入
 
@@ -170,11 +179,11 @@ LOAD LABEL test_db.label3
 (
     DATA INFILE("s3a://bucket_gcs/input/file1.csv")
     INTO TABLE table1
-    (id, city)
+    (id, name, score)
     
     DATA INFILE("s3a://bucket_gcs/input/file2.csv")
     INTO TABLE table2
-    (id, name, score)
+    (id, city)
 )
 WITH BROKER "mybroker"
 (
@@ -184,7 +193,9 @@ WITH BROKER "mybroker"
 )
 ```
 
-> 说明：从 Amazon S3 导入数据使用的是 S3A 协议，因此文件路径的前缀必须为 `s3a://`。
+> **说明**
+>
+> 从 Amazon S3 导入数据使用的是 S3A 协议，因此文件路径的前缀必须为 `s3a://`。
 
 #### 从 阿里云 OSS 导入
 
@@ -195,11 +206,11 @@ LOAD LABEL test_db.label4
 (
     DATA INFILE("oss://bucket_oss/input/file1.csv")
     INTO TABLE table1
-    (id, city)
+    (id, name, score)
     
     DATA INFILE("oss://bucket_oss/input/file2.csv")
     INTO TABLE table2
-    (id, name, score)
+    (id, city)
 )
 WITH BROKER "mybroker"
 (
@@ -218,11 +229,11 @@ LOAD LABEL test_db.label5
 (
     DATA INFILE("cosn://bucket_cos/input/file1.csv")
     INTO TABLE table1
-    (id, name)
+    (id, name, score)
     
     DATA INFILE("cosn://bucket_cos/input/file2.csv")
     INTO TABLE table2
-    (id, name, score)
+    (id, city)
 )
 WITH BROKER "mybroker"
 (
