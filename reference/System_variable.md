@@ -78,9 +78,11 @@ SET forward_to_master = concat('tr', 'u', 'e');
 SELECT /*+ SET_VAR(exec_mem_limit = 8589934592) */ name FROM people ORDER BY name;
 
 SELECT /*+ SET_VAR(query_timeout = 1) */ sleep(3);
-```
 
-> 注：提示必须以"/*+"开头，并且只能跟随在 SELECT 关键字之后。
+> **注意**
+>
+> `SET_VAR` 提示仅支持 MySQL 8.0 之后的版本。
+> 提示必须以 "/*+" 开头，并且只能跟在 SELECT 关键字之后。
 
 ## 支持的变量
 
@@ -107,6 +109,13 @@ SELECT /*+ SET_VAR(query_timeout = 1) */ sleep(3);
 * disable_colocate_join
 
   控制是否启用 Colocate Join 功能。默认为 false，表示启用该功能。true 表示禁用该功能。当该功能被禁用后，查询规划将不会尝试执行 Colocate Join。
+
+* streaming_preaggregation_mode
+  
+  用于设置多阶段聚合时，group-by 第一阶段的预聚合方式。如果第一阶段本地预聚合效果不好，则可以关闭预聚合，走流式方式，把数据简单序列化之后发出去。取值含义如下：
+  * `auto`：先探索本地预聚合，如果预聚合效果好，则进行本地预聚合；否则切换成流式。默认值，建议保留。
+  * `force_preaggregation`: 不进行探索，直接进行本地预聚合。
+  * `force_streaming`: 不进行探索，直接做流式。
 
 * disable_streaming_preaggregations
 
@@ -272,7 +281,7 @@ SELECT /*+ SET_VAR(query_timeout = 1) */ sleep(3);
 
 * query_timeout
 
-   用于设置查询超时，单位是「秒」。该变量会作用于当前连接中所有的查询语句，以及 INSERT 语句。默认为 300 秒，即 5 分钟。
+   用于设置查询超时，单位是「秒」。该变量会作用于当前连接中所有的查询语句，以及 INSERT 语句。默认为 300 秒，即 5 分钟。取值范围：1 ~ 259200。
 
 * resource_group
 

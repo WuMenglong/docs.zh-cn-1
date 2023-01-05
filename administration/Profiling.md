@@ -80,7 +80,7 @@ StarRocks 支持四种数据模型：主键模型 (PRIMARY KEY)，聚合模型 (
         state tinyint NOT NULL
     )
     PRIMARY KEY (dt, order_id)
-    DISTRIBUTED BY HASH(order_id) BUCKETS 4
+    DISTRIBUTED BY HASH(order_id) BUCKETS 4;
     ```
 
 ### 使用内存表
@@ -154,7 +154,7 @@ RANGE 分区用于将数据划分成不同区间，逻辑上等同于将原始�
 HASH 分桶指根据 Hash 值将数据划分成不同的 Bucket。
 
 * 建议采用区分度大的列做分桶，避免出现数据倾斜。
-* 为方便数据恢复，建议单个 Bucket 保持较小的 Size，应保证其中数据压缩后大小保持在 100M 至 1GB 左右。建议您在建表或增加分区时合理考虑 Bucket 数目，其中不同分区可指定不同的 Bucket 数量。
+* 为方便数据恢复，建议单个 Bucket 保持较小的 Size，应保证其中数据压缩后大小保持在 100MB 至 1GB 左右。建议您在建表或增加分区时合理考虑 Bucket 数目，其中不同分区可指定不同的 Bucket 数量。
 * 不建议采用 Random 分桶方式。建表时，请指定明确的 Hash 分桶列。
 
 ### 使用稀疏索引和 Bloomfilter

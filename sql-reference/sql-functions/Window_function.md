@@ -173,7 +173,7 @@ select x, y,
         over (
             partition by x
             order by y
-        ) as rank
+        ) as `rank`
 from int_t;
 ~~~
 
@@ -266,7 +266,13 @@ from mail_merge;
 LAG (expr, offset, default) OVER (partition_by_clause order_by_clause)
 ~~~
 
-以下示例计算 `stock_ticker` 表中每个 `closing_date` 前一天的收盘价。
+**参数说明：**
+
+* `expr`: 需要计算的目标字段。
+* `offset`: 偏移量，表示向前查找的行数，必须为**正整数**。如果未指定，默认按照 1 处理。
+* `default`: 没有找到符合条件的行时，返回的默认值。如果未指定 `default`，默认返回 NULL。`default` 的数据类型必须和 `expr` 兼容。
+
+以下示例计算 `stock_ticker` 表中股票 JDR **前一天**的收盘价 `closing_price`。`default` 设置为 0，表示如果没有符合条件的行，则返回 0，比如下面示例中返回结果的第一行。
 
 ~~~SQL
 select stock_symbol, closing_date, closing_price,
@@ -346,6 +352,12 @@ from mail_merge;
 LEAD (expr, offset, default) OVER (partition_by_clause order_by_clause)
 ~~~
 
+参数说明：
+
+* `expr`: 需要计算的目标字段。
+* `offset`: 偏移量，表示向后查找的行数，必须为**正整数**。如果未指定，默认按照 1 处理。
+* `default`: 没有找到符合条件的行时，返回的默认值。如果未指定 `default`，默认返回 NULL。`default` 的数据类型必须和 `expr` 兼容。
+
 以下示例计算第二天的收盘价对比当天收盘价的走势，即第二天收盘价比当天高还是低。
 
 ~~~SQL
@@ -419,7 +431,7 @@ where property in ('prime','square');
 +---+----------+---------------+
 ~~~
 
-从2.4版本开始，该函数支持设置`rows between n preceding and n following`，即支持计算当前行前n行及后n行中的最大值。比如要计算当前行前3行和后2行中的最大值，语句可写为：
+从 2.4 版本开始，该函数支持设置 `rows between n preceding and n following`，即支持计算当前行前n行及后 `n` 行中的最大值。比如要计算当前行前 3 行和后 2 行中的最大值，语句可写为：
 
 ~~~SQL
 select x, property,
@@ -470,7 +482,7 @@ where property in ('prime','square');
 +---+----------+---------------+
 ~~~
 
-从2.4版本开始，该函数支持设置`rows between n preceding and n following`，即支持计算当前行前n行以及后`n`行中的最小值。比如要计算当前行前3行和后2行中的最小值，语句可写为：
+从 2.4 版本开始，该函数支持设置 `rows between n preceding and n following`，即支持计算当前行前n行以及后 `n` 行中的最小值。比如要计算当前行前 3 行和后 2 行中的最小值，语句可写为：
 
 ~~~SQL
 select x, property,
@@ -558,7 +570,7 @@ select x, y,
     rank() over(
         partition by x 
         order by y
-    ) as rank
+    ) as `rank`
 from int_t;
 ~~~
 
@@ -599,7 +611,7 @@ select x, y,
     row_number() over(
         partition by x 
         order by y
-    ) as rank
+    ) as `rank`
 from int_t;
 ~~~
 

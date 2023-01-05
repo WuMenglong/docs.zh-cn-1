@@ -362,7 +362,7 @@ GROUP BY advertiser, channel;
 
 #### 近似去重
 
-以上文表 `advertiser_view_record` 为例，如果想在查询点击广告的 UV 时实现近似去重查询加速，可基于该明细表创建一张物化视图，并使用 hll_union() 函数预先聚合数据。
+以上文表 `advertiser_view_record` 为例，如果想在查询点击广告的 UV 时实现近似去重查询加速，可基于该明细表创建一张物化视图，并使用 [hll_union()](../sql-reference/sql-functions/aggregate-functions/hll_union.md) 函数预先聚合数据。
 
 ```SQL
 CREATE MATERIALIZED VIEW advertiser_uv2 AS
@@ -408,11 +408,9 @@ FROM tableA
 
 - 为一张表创建过多的物化视图会影响导入的效率。导入数据时，物化视图和基表数据将同步更新，如果一张基表包含 n 个物化视图，向基表导入数据时，其导入效率大约等同于导入 n 张表，数据导入的速度会变慢。
 
-## 使用物化视图进行数仓建模
+- 当前版本物化视图中使用聚合函数需要与 GROUP BY 语句一起使用，且 SELECT LIST 中至少包含一个分组列。
 
-> **注意**
->
-> StarRocks 2.4 之前版本不支持以下功能。
+## 使用物化视图进行数仓建模
 
 2.4 版本中，StarRocks 进一步支持异步多表物化视图，方便您通过创建物化视图的方式为数据仓库进行建模。异步物化视图支持所有[数据模型](../table_design/Data_model.md)。
 
@@ -426,7 +424,11 @@ FROM tableA
 
 #### 开启异步物化视图
 
-使用异步物化视图前，您需要在 FE 配置文件 **fe.conf** 中添加 FE 配置项 `enable_experimental_mv` 并设置为 `true`，然后重启集群使配置生效。
+使用异步物化视图前，您需要使用以下命令设置 FE 配置项 `enable_experimental_mv` 为 `true`：
+
+```SQL
+ADMIN SET FRONTEND CONFIG ("enable_experimental_mv"="true");
+```
 
 #### 创建基表
 
@@ -597,7 +599,7 @@ REFRESH MATERIALIZED VIEW order_mv;
 >
 > 您可以对异步刷新和手动刷新方式的物化视图手动调用物化视图，但不能通过该命令手动刷新单表同步刷新方式的物化视图。
 
-您可以通过 [CANCEL REFRESH MATERIALIZED VIEW](../sql-reference/sql-statements/data-manipulation/CANCEL%20REFRESH%20MATERIALIZED%20VIEW.md) 命令手动刷新特定物化视图。
+您可以通过 [CANCEL REFRESH MATERIALIZED VIEW](../sql-reference/sql-statements/data-manipulation/CANCEL%20REFRESH%20MATERIALIZED%20VIEW.md) 命令取消异步或手动刷新物化视图的刷新任务。
 
 ### 查看多表物化视图的执行状态
 
@@ -627,5 +629,5 @@ DROP MATERIALIZED VIEW order_mv;
   - 您可以为异步刷新物化视图设定与基表不同的分区方式和分桶方式。
   - 异步刷新物化视图支持分区上卷。例如，基表基于天做分区方式，您可以设置物化视图按月做分区。
 - 在异步刷新和手动刷新方式下，您可以基于多张表构建物化视图。
-- 异步刷新和手动刷新的物化视图的分区列和分桶列必须在查询语句中；如果查询语句中有聚合函数，分区列和分桶列必须出现在 GROUP BY 语句中。
+- 异步刷新和手动刷新的物化视图的分区列和分桶列必须在查询语句中。
 - 查询语句不支持非确定性函数，其中包括 rand()、random()、uuid() 和 sleep()。

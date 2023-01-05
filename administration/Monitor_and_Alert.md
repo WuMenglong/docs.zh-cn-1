@@ -39,7 +39,7 @@ StarRocksManager 的监控可以分成 **集群** 和 **节点** 两个维度。
 
 ## 使用 Prometheus+Grafana
 
-您可以使用 [Prometheus](https://prometheus.io/) 作为 StarRocks 监控数据存储方案，并使用[Grafana](https://grafana.com/) 作为可视化组件。
+您可以使用 [Prometheus](https://prometheus.io/) 作为 StarRocks 监控数据存储方案，并使用 [Grafana](https://grafana.com/) 作为可视化组件。
 
 Prometheus 是一个拥有多维度数据模型的、灵活的查询语句的时序数据库。它可以通过 Pull 或 Push 采集被监控系统的监控项，存入自身的时序数据库中。并且通过丰富的多维数据查询语言，满足用户的不同需求。
 
@@ -107,7 +107,7 @@ scrape_configs:
 
 #### 启动 Prometheus
 
-通过一下命令启动 Prometheus。
+通过以下命令启动 Prometheus。
 
 ```bash
 nohup ./prometheus \
@@ -151,7 +151,7 @@ wget https://dl.grafana.com/oss/release/grafana-8.0.6.linux-amd64.tar.gz
 tar -zxf grafana-8.0.6.linux-amd64.tar.gz
 ```
 
-#### 配置 Prometheus
+#### 配置 Grafana
 
 在 **./conf/defaults.ini** 中添加相关的配置。
 

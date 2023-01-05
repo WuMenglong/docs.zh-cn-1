@@ -26,6 +26,8 @@ curl --location-trusted -u <username>:<password> -XPUT <url>
 
 - 建议在 HTTP 请求的请求头字段 `Expect` 中指定 `100-continue`，即 `"Expect:100-continue"`。这样在服务器拒绝导入作业请求的情况下，可以避免不必要的数据传输，从而减少不必要的资源开销。
 
+注意在 StarRocks 中，部分文字是 SQL 语言的保留关键字，不能直接用于 SQL 语句。如果想在 SQL 语句中使用这些保留关键字，必须用反引号 (`) 包含起来。参见[关键字](/sql-reference/sql-statements/keywords.md)。
+
 ## 参数说明
 
 ### `username` 和 `password`
@@ -91,9 +93,9 @@ http://<fe_host>:<fe_http_port>/api/<database_name>/<table_name>/_stream_load
 
 | **参数名称**      | **是否必选** | **参数说明**                                                 |
 | ----------------- | ------------ | ------------------------------------------------------------ |
-| jsonpaths         | 否           | 用于指定待导入的字段的名称。参数取值为 JSON 格式。Stream Load 支持通过如下模式之一来导入 JSON 数据：<ul><li>简单模式：不需要设置 `jsonpaths` 参数。这种模式适用于 JSON 数据相对简单、不需要通过转换来实现 JSON 数据跟 StarRocks 表数据之间的映射的场景。要求 JSON 数据是大括号 {} 表示的对象类型，例如 `{"k1": 1, "k2": 2, "k3": "hello"}` 中，`k1`、`k2`、`k3` 是字段的名称，按名称直接对应目标 StarRocks 表中的`col1`、`col2`、`col3` 三列。</li><li>匹配模式：需要设置 `jsonpaths` 参数。这种模式适用于 JSON 数据相对复杂、需要通过转换来实现 JSON 数据跟 StarRocks 表数据之间的映射的场景。具体请参见本文提供的示例 “[使用匹配模式导入数据](/sql-reference/sql-statements/data-manipulation/STREAM%20LOAD.md#使用匹配模式导入数据)。”</li></ul> |
-| strip_outer_array | 否           | 用于指定是否裁剪最外层的数组结构。取值范围：`true` 和 `false`。默认值：`false`。真实业务场景中，待导入的 JSON 数据可能在最外层有一对表示数组结构的中括号 `[]`。这种情况下，一般建议您指定该参数取值为 `true`，这样 StarRocks 会剪裁掉外层的中括号 `[]`，并把中括号 `[]` 里的每个内层数组都作为一行单独的数据导入。如果您指定该参数取值为 `false`，则 StarRocks 会把整个 JSON 数据文件解析成一个数组，并作为一行数据导入。例如，待导入的 JSON 数据为 `[ {"k1" : 1, "v1" : 2}, {"k1" : 3, "v1" : 4} ]`，如果指定该参数取值为 `true`，则 StarRocks 会把 `{"k1" : 1, "v1" : 2}` 和 `{"k1" : 3, "v1" : 4}` 解析成两行数据，并导入到目标 StarRocks 表中对应的数据行。 |
-| json_root         | 否           | 用于指定待导入 JSON 数据的根元素。该参数仅用于通过匹配模式导入 JSON 数据。参数取值为合法的 JsonPath 字符串。默认值为空，表示会导入整个 JSON 数据文件的数据。具体请参见本文提供的示例“[导入数据并指定 JSON 根元素](/sql-reference/sql-statements/data-manipulation/STREAM%20LOAD.md)。” |
+| jsonpaths         | 否           | 用于指定待导入的字段的名称。参数取值为 JSON 格式。Stream Load 支持通过如下模式之一来导入 JSON 数据：<ul><li>简单模式：不需要设置 `jsonpaths` 参数。这种模式适用于 JSON 数据结构相对简单、不需要通过转换来实现 JSON 数据跟 StarRocks 表数据之间的映射的场景。要求 JSON 数据是大括号 {} 表示的对象类型，例如 `{"category": 1, "author": 2, "price": "3"}` 中，`category`、`author`、`price` 是字段的名称，按名称直接对应目标 StarRocks 表中的 `category`、`author`、`price` 三列。</li><li>严格模式：需要设置 `jsonpaths` 参数。这种模式适用于 JSON 数据结构相对复杂、需要通过转换来实现 JSON 数据跟 StarRocks 表数据之间的映射的场景。具体请参见本文提供的示例 “[使用严格模式导入数据](#使用严格模式导入数据)。”</li></ul> |
+| strip_outer_array | 否           | 用于指定是否裁剪最外层的数组结构。取值范围：`true` 和 `false`。默认值：`false`。真实业务场景中，待导入的 JSON 数据可能在最外层有一对表示数组结构的中括号 `[]`。这种情况下，一般建议您指定该参数取值为 `true`，这样 StarRocks 会剪裁掉外层的中括号 `[]`，并把中括号 `[]` 里的每个内层数组都作为一行单独的数据导入。如果您指定该参数取值为 `false`，则 StarRocks 会把整个 JSON 数据文件解析成一个数组，并作为一行数据导入。例如，待导入的 JSON 数据为 `[ {"category" : 1, "author" : 2}, {"category" : 3, "author" : 4} ]`，如果指定该参数取值为 `true`，则 StarRocks 会把 `{"category" : 1, "author" : 2}` 和 `{"category" : 3, "author" : 4}` 解析成两行数据，并导入到目标 StarRocks 表中对应的数据行。 |
+| json_root         | 否           | 用于指定待导入 JSON 数据的根元素。该参数仅用于通过严格模式导入 JSON 数据。参数取值为合法的 JsonPath 字符串。默认值为空，表示会导入整个 JSON 数据文件的数据。具体请参见本文提供的示例“[导入数据并指定 JSON 根节点](#指定-json-根节点使严格模式导入数据)”。 |
 | ignore_json_size | 否   | 用于指定是否检查 HTTP 请求中 JSON Body 的大小。<br>**说明**<br>HTTP 请求中 JSON Body 的大小默认不能超过 100 MB。如果 JSON Body 的大小超过 100 MB，会提示 "The size of this batch exceed the max size [104857600] of json type data data [8617627793]. Set ignore_json_size to skip check, although it may lead huge memory consuming." 错误。为避免该报错，可以在 HTTP 请求头中添加 `"ignore_json_size:true"` 设置，忽略对 JSON Body 大小的检查。 |
 
 另外，导入 JSON 格式的数据时，需要注意单个 JSON 对象的大小不能超过 4 GB。如果 JSON 文件中单个 JSON 对象的大小超过 4 GB，会提示 "This parser can't support a document that big." 错误。
@@ -120,7 +122,7 @@ http://<fe_host>:<fe_http_port>/api/<database_name>/<table_name>/_stream_load
 | where            | 否           | 用于指定过滤条件。如果指定该参数，StarRocks 会按照指定的过滤条件对转换后的数据进行过滤。只有符合 WHERE 子句中指定的过滤条件的数据才会导入。 |
 | max_filter_ratio | 否           | 用于指定导入作业的最大容错率，即导入作业能够容忍的因数据质量不合格而过滤掉的数据行所占的最大比例。取值范围：`0`~`1`。默认值：`0` 。<br>建议您保留默认值 `0`。这样的话，当导入的数据行中有错误时，导入作业会失败，从而保证数据的正确性。<br>如果希望忽略错误的数据行，可以设置该参数的取值大于 `0`。这样的话，即使导入的数据行中有错误，导入作业也能成功。<br>**说明**<br>这里因数据质量不合格而过滤掉的数据行，不包括通过 WHERE 子句过滤掉的数据行。 |
 | timeout          | 否           | 用于导入作业的超时时间。取值范围：1 ~ 259200。单位：秒。默认值：`600`。<br>**说明**<br>除了 `timeout` 参数可以控制该导入作业的超时时间外，您还可以通过 [FE 配置参数](../../../administration/Configuration.md#导入和导出相关动态参数) `stream_load_default_timeout_second` 来统一控制 Stream Load 导入作业的超时时间。如果指定了`timeout` 参数，则该导入作业的超时时间以 `timeout` 参数为准；如果没有指定 `timeout` 参数，则该导入作业的超时时间以`stream_load_default_timeout_second` 为准。 |
-| strict_mode      | 否           | 用于指定是否开启匹配模式。取值范围：`true` 和 `false`。默认值：`false`。`true` 表示开启，`false` 表示关闭。 |
+| strict_mode      | 否           | 用于指定是否开严格模式。取值范围：`true` 和 `false`。默认值：`false`。`true` 表示开启，`false` 表示关闭。 |
 | timezone         | 否           | 用于指定导入作业所使用的时区。默认为东八区 (Asia/Shanghai)。<br>该参数的取值会影响所有导入涉及的、跟时区设置有关的函数所返回的结果。受时区影响的函数有 strftime、alignment_timestamp 和 from_unixtime 等，具体请参见[设置时区](../../../administration/timezone.md)。导入参数 `timezone` 设置的时区对应“[设置时区](../../../administration/timezone.md)”中所述的会话级时区。 |
 | load_mem_limit   | 否           | 导入作业的内存限制，最大不超过 BE 的内存限制。单位：字节。默认内存限制为 2 GB。 |
 
@@ -248,7 +250,7 @@ StarRocks 数据库 `test_db` 里的表 `table2` 包含三列，按顺序依次�
 如果要把 `example2.csv` 中所有的数据都导入到 `table2` 中，并且要求容错率最大不超过 `0.2`，可以执行如下命令：
 
 ```Bash
-curl --location-trusted -u root: -H "label:label3" \
+curl --location-trusted -u root: -H "label:label2" \
     -H "max_filter_ratio:0.2" \
     -T example2.csv -XPUT \
     http://<fe_host>:<fe_http_port>/api/test_db/table2/_stream_load
@@ -263,7 +265,7 @@ StarRocks 数据库 `test_db` 里的表 `table3` 包含三列，按顺序依次�
 如果要把 `example3.csv` 中所有的数据都导入到 `table3` 中，可以执行如下命令：
 
 ```Bash
-curl --location-trusted -u root:  -H "label:label4" \
+curl --location-trusted -u root:  -H "label:label3" \
     -H "columns: col2, col1, col3" \
     -T example3.csv -XPUT \
     http://<fe_host>:<fe_http_port>/api/test_db/table3/_stream_load
@@ -282,7 +284,7 @@ StarRocks 数据库 `test_db` 里的表 `table4` 包含三列，按顺序依次�
 如果只想把 `example4.csv` 中第一列的值等于 `20180601` 的数据行导入到 `table4` 中，可以执行如下命令：
 
 ```Bash
-curl --location-trusted -u root: -H "label:label2" \
+curl --location-trusted -u root: -H "label:label4" \
     -H "columns: col1, col2，col3]"\
     -H "where: col1 = 20180601" \
     -T example4.csv -XPUT \
@@ -314,7 +316,7 @@ StarRocks 数据库 `test_db` 里的表 `table6` 包含三列，按顺序依次�
 
 数据文件 `example6.csv` 也包含三列，按顺序一一对应 `table6` 中的三列 `col1`、`col2`、`col3`。
 
-如果要把 `example6.csv` 中所有的数据导入到 `table6` 中，并且要求进行严格模式的过滤、使用时区 `Africa/Abidjan`，可以执行如下命令：
+如果要把 `example6.csv` 中所有的数据导入到 `table6` 中，并且要求进严格模式的过滤、使用时区 `Africa/Abidjan`，可以执行如下命令：
 
 ```Bash
 curl --location-trusted -u root: \
@@ -343,11 +345,11 @@ curl --location-trusted -u root: \
 >
 > 上述示例中，通过 `columns` 参数，把 `example7.csv` 中的两列临时命名为 `temp1`、`temp2`，然后使用函数指定数据转换规则，包括：
 >
-> - 使用 `hll_hash` 函数把 `example7.csv` 中的 `temp1` 列转换成 HLL 类型的数据并落入 `table7`中的 `col1` 列。
+> - 使用 `hll_hash` 函数把 `example7.csv` 中的 `temp1` 列转换成 HLL 类型的数据并映射到 `table7`中的 `col1` 列。
 >
-> - 使用 `empty_hll` 函数给导入的数据行在 `table7` 中的第二列补充默认值。
+> - 使用 `hll_empty` 函数给导入的数据行在 `table7` 中的第二列补充默认值。
 
-有关 `hll_hash` 函数和 `hll_empty` 函数的用法，请参见 [HLL](../data-definition/HLL.md)。
+有关 `hll_hash` 函数和 `hll_empty` 函数的用法，请参见 [hll_hash](../../sql-functions/aggregate-functions/hll_hash.md) 和 [hll_empty](../../sql-functions/aggregate-functions/hll_empty.md)。
 
 #### **导入数据到含有 BITMAP 类型列的表**
 
@@ -418,7 +420,25 @@ curl --location-trusted -u root: -H "label:label6" \
 ]
 ```
 
-#### **使用匹配模式导入数据**
+#### **使用严格模式导入数据**
+
+StarRocks 按照如下顺序对数据进行匹配和处理：
+
+1. （可选）根据 `strip_outer_array` 参数裁剪最外层的数组结构。
+
+    > **说明**
+    >
+    > 仅在 JSON 数据的最外层是一个通过中括号 `[]` 表示的数组结构时涉及，需要设置 `strip_outer_array` 为 `true`。
+
+2. （可选）根据 `json_root` 参数匹配 JSON 数据的根节点。
+
+    > **说明**
+    >
+    > 仅在 JSON 数据存在根节点时涉及，需要通过 `json_root` 参数来指定根节点。
+
+3. 根据 `jsonpaths` 参数提取待导入的 JSON 数据。
+
+##### **不指定 JSON 根节点、使严格模式导入数据**
 
 假设数据文件 `example2.json` 包含如下数据：
 
@@ -430,7 +450,7 @@ curl --location-trusted -u root: -H "label:label6" \
 ]
 ```
 
-您可以通过指定 `jsonpaths` 参数进行精准导入，例如只导入 `category`、`author`、`price` 三个字段的数据:
+您可以通过指定 `jsonpaths` 参数进行精准导入，例如只导入 `category`、`author`、`price` 三个字段的数据：
 
 ```Bash
 curl --location-trusted -u root: -H "label:label7" \
@@ -444,11 +464,9 @@ curl --location-trusted -u root: -H "label:label7" \
 
 > **说明**
 >
-> - 这里的 JSON 数据是以数组形式表示，并且数组中每个元素（一个 JSON 对象）表示一条记录，则需要设置 `strip_outer_array` 为 `true`，以表示展开数组。
->
-> - 如果 JSON 数据是以数组开始，并且数组中每个对象是一条记录，在设置 `jsonpaths` 时，我们的 ROOT 元素实际上是数组中对象。
+> 上述示例中，JSON 数据的最外层是一个通过中括号 [] 表示的数组结构，并且数组结构中的每个 JSON 对象都表示一条数据记录。因此，需要设置 `strip_outer_array` 为 `true`来裁剪最外层的数组结构。导入过程中，未指定的字段 `title` 会被忽略掉。
 
-#### **导入数据并指定 JSON 根元素**
+##### **指定 JSON 根节点、使严格模式导入数据**
 
 假设数据文件 `example3.json` 包含如下数据：
 
@@ -464,7 +482,7 @@ curl --location-trusted -u root: -H "label:label7" \
 }
 ```
 
-您可以通过指定 `jsonpath` 进行精准导入，例如只导入 `category`、`author`、`price` 三个字段的数据:
+您可以通过指定 `jsonpaths` 进行精准导入，例如只导入 `category`、`author`、`price` 三个字段的数据：
 
 ```Bash
 curl --location-trusted -u root: \
@@ -479,8 +497,4 @@ curl --location-trusted -u root: \
 
 > **说明**
 >
-> - 通过 `json_root` 参数指定了需要真正导入的数据为 `RECORDS` 字段对应的值，即一个 JSON 数组。
->
-> - 通过指定 `strip_outer_array: true` 来展开这个 JSON 数组，内部每一个 JSON 对象表示一行数据。
->
-> - 其他如 `id`、`comments` 字段的信息都会被忽略掉。
+> 上述示例中，JSON 数据的最外层是一个通过中括号 [] 表示的数组结构，并且数组结构中的每个 JSON 对象都表示一条数据记录。因此，需要设置 `strip_outer_array` 为 `true`来裁剪最外层的数组结构。导入过程中，未指定的字段 `title` 和 `timestamp` 会被忽略掉。另外，示例中还通过 `json_root` 参数指定了需要真正导入的数据为 `RECORDS` 字段对应的值，即一个 JSON 数组。

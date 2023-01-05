@@ -8,7 +8,7 @@
 
 ### FE
 
-- 添加 Follower FE。添加后，可使用 `SHOW PROC '/frontends'\G;` 命令查看新增FE 的状态。
+- 添加 Follower FE。添加后，可使用 `SHOW PROC '/frontends'\G` 命令查看新增FE 的状态。
 
    ```SQL
     ALTER SYSTEM ADD FOLLOWER "host:edit_log_port"[, ...];
@@ -20,7 +20,7 @@
     ALTER SYSTEM DROP FOLLOWER "host:edit_log_port"[, ...];
     ```
 
-- 添加 Observer FE。添加后，可通过 `SHOW PROC '/frontends'\G;` 命令查看新增FE 的状态。
+- 添加 Observer FE。添加后，可通过 `SHOW PROC '/frontends'\G` 命令查看新增FE 的状态。
 
     ```SQL
     ALTER SYSTEM ADD OBSERVER "host:edit_log_port"[, ...];
@@ -36,7 +36,7 @@
 
     | **参数**           | **必选** | **说明**                                                     |
     | ------------------ | -------- | ------------------------------------------------------------ |
-    | host:edit_log_port | 是       | <ul><li>`host`：FE 机器的主机名或 IP 地址。如果机器存在多个 IP 地址，则该参数取值应为 `priority_networks` 配置项下设定的唯一通信 IP 地址。</li><li>`edit_log_port`：FE 上的 BDB JE 通信端口，默认为 `9010`。</li></ul> |
+    | host:edit_log_port | 是       | <ul><li>`host`：FE 机器的主机名或 IP 地址。如果机器存在多个 IP 地址，则该参数取值应为 `priority_networks` 配置项下设定的唯一通信 IP 地址。</li><li>`edit_log_port`：FE 上的 BDBJE 通信端口，默认为 `9010`。</li></ul> |
 
 ### BE
 

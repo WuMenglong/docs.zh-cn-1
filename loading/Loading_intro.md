@@ -26,7 +26,7 @@ StarRocks 支持两种导入模式：同步导入和异步导入。
 
 支持同步模式的导入方式有 Stream Load 和 INSERT。
 
-导入过程如下：
+用户操作过程如下：
 
 1. 创建导入作业。
 
@@ -43,7 +43,7 @@ StarRocks 支持两种导入模式：同步导入和异步导入。
 
 支持异步模式的导入方式有 Broker Load、Routine Load 和 Spark Load。
 
-导入过程如下：
+用户操作过程如下：
 
 1. 创建导入作业。
 
@@ -54,30 +54,47 @@ StarRocks 支持两种导入模式：同步导入和异步导入。
 
 3. 轮询查看导入作业的状态，直到状态变为 **FINISHED** 或 **CANCELLED**。
 
-在异步的导入方式 Broker Load、Routine Load 和 Spark Load 中，一个导入作业的执行流程主要分为 5 个阶段，如下图所示。
+Broker Load 和 Spark Load 导入作业的执行流程主要分为 5 个阶段，如下图所示。
 
-![异步导入流程图](/assets/4.1-1.png)
+![Broker Load 和 Spark Load 流程图](/assets/4.1-1.png)
 
 每个阶段的描述如下：
 
-1. **PENDING**<br>
+1. **PENDING**
+
    该阶段是指提交导入作业后，等待 FE 调度执行。
 
-2. **ETL**<br>
+2. **ETL**
+
    该阶段执行数据的预处理，包括清洗、分区、排序、聚合等。
 
    > **说明**
    >
    > 如果是 Broker Load 作业，该阶段会直接完成。
 
-3. **LOADING**<br>
+3. **LOADING**
+
    该阶段先对数据进行清洗和转换，然后将数据发送给 BE 处理。当数据全部导入后，进入等待生效过程，此时，导入作业的状态依旧是 **LOADING**。
 
-4. **FINISHED**<br>
+4. **FINISHED**
+
    在导入作业涉及的所有数据均生效后，作业的状态变成 **FINISHED**，此时，导入的数据均可查询。**FINISHED** 是导入作业的最终状态。
 
-5. **CANCELLED**<br>
+5. **CANCELLED**
+
    在导入作业的状态变为 **FINISHED** 之前，您可以随时取消作业。另外，如果导入出现错误，StarRocks 系统也会自动取消导入作业。作业取消后，进入 **CANCELLED** 状态。**CANCELLED** 也是导入作业的一种最终状态。
+
+Routine Load 导入作业的执行流程描述如下：
+
+1. 用户通过支持 MySQL 协议的客户端向 FE 提交一个导入作业。
+
+2. FE 将该导入作业拆分成若干个任务，每个任务负责导入若干个分区的数据。
+
+3. FE 将各个任务分配到指定的 BE 上执行。
+
+4. BE 完成分配的任务后，向 FE 汇报。
+
+5. FE 根据汇报结果，继续生成后续新的任务，或者对失败的任务进行重试，或者暂停任务的调度。
 
 ## 导入方式
 
@@ -88,7 +105,7 @@ StarRocks 提供 [Stream Load](../loading/StreamLoad.md)、[Broker Load](../load
 | Stream Load        | HTTP  | 通过 HTTP 协议导入本地文件、或通过程序导入数据流。           | 10 GB 以内           |<ul><li>本地文件</li><li>流式数据</li></ul>                           |<ul><li>CSV</li><li>JSON</li></ul>          | 同步     |
 | Broker Load        | MySQL | 从 HDFS 或外部云存储系统导入数据。             | 数十到数百 GB        |<ul><li>HDFS</li><li>Amazon S3</li><li>Google GCS</li><li>阿里云 OSS</li><li>腾讯云 COS</li></ul> |<ul><li>CSV</li><li>Parquet</li><li>ORC</li></ul> | 异步     |
 | Routine Load       | MySQL | 从 Apache Kafka® 实时地导入数据流。                          | 微批导入 MB 到 GB 级 | Kafka                                        |<ul><li>CSV</li><li>JSON</li></ul>          | 异步     |
-| Spark Load         | MySQL | <ul><li>通过 Apache Spark™ 集群初次从 HDFS 或 Hive 迁移导入大量数据。</li><li>需要做全局数据字典来精确去重。</li></ul> | 数十 GB 到 TB级别    | <ul><li>HDFS</li><li>Hive</li></ul>                                |<ul><li>CSV</li><li>Parquet</li></ul>       | 异步     |
+| Spark Load         | MySQL | <ul><li>通过 Apache Spark™ 集群初次从 HDFS 或 Hive 迁移导入大量数据。</li><li>需要做全局数据字典来精确去重。</li></ul> | 数十 GB 到 TB级别    | <ul><li>HDFS</li><li>Hive</li></ul>                                |<ul><li>CSV</li><li>ORC（2.0 版本之后支持）</li><li>Parquet（2.0 版本之后支持）</li></ul>       | 异步     |
 | INSERT INTO SELECT | MySQL |<ul><li>外表导入。</li><li>StarRocks 数据表之间的数据导入。</li></ul>              | 跟内存相关           |<ul><li>StarRocks 表</li><li>外部表</li></ul>                      | StarRocks 表          | 同步     |
 | INSERT INTO VALUES | MySQL |<ul><li>单条批量小数据量插入。</li><li>通过 JDBC 等接口导入。</li></ul>            | 简单测试用           |<ul><li>程序</li><li>ETL 工具</li></ul>                            | SQL                   | 同步     |
 
@@ -104,7 +121,7 @@ StarRocks 提供 [Stream Load](../loading/StreamLoad.md)、[Broker Load](../load
 
 下图详细展示了在各种数据源场景下，应该选择哪一种导入方式。
 
-![数据源与导入方式关系图](/assets/4.1.2.png)
+![数据源与导入方式关系图](/assets/4.1-3.png)
 
 ## 内存限制
 
@@ -132,7 +149,7 @@ StarRocks 提供 [Stream Load](../loading/StreamLoad.md)、[Broker Load](../load
 
 - `max_running_txn_num_per_db`
 
-  StarRocks 集群每个数据库中正在运行的导入作业的最大个数，默认值为 100。当数据库中正在运行的导入作业达到最大个数限制时，后续提交的导入作业不会执行。如果是同步的导入作业，作业会被拒绝；如果是异步的导入作业，作业会在队列中等待。
+  StarRocks 集群每个数据库中正在进行的导入事务的最大个数（一个导入作业可能包含多个事务），默认值为 100。当数据库中正在运行的导入事务达到最大个数限制时，后续提交的导入作业不会执行。如果是同步的导入作业，作业会被拒绝；如果是异步的导入作业，作业会在队列中等待。
 
   > **说明**
   >
@@ -167,9 +184,9 @@ StarRocks 提供 [Stream Load](../loading/StreamLoad.md)、[Broker Load](../load
   用于导入的最大内存使用量和最大内存使用百分比，用来限制单个 BE 上所有导入作业的内存总和的使用上限。StarRocks 系统会在两个参数中取较小者，作为最终的使用上限。
 
   - `load_process_max_memory_limit_bytes`：指定 BE 上最大内存使用量，默认为 100 GB。
-  - `load_process_max_memory_limit_percent`：指定 BE 上最大内存使用百分比，默认为 30%。该参数与 `mem_limit` 参数不同。`mem_limit` 参数指定的是 BE 进程内存上限，默认硬上限为 BE 所在机器内存的 90%，软上限为 BE 所在机器内存的 80%。
+  - `load_process_max_memory_limit_percent`：指定 BE 上最大内存使用百分比，默认为 30%。该参数与 `mem_limit` 参数不同。`mem_limit` 参数指定的是 BE 进程内存上限，默认硬上限为 BE 所在机器内存的 90%，软上限为 BE 所在机器内存的 90% x 90%。
 
-    假设 BE 所在机器物理内存大小为 M，则用于导入的内存上限为：`M x 80% x 30%`。
+    假设 BE 所在机器物理内存大小为 M，则用于导入的内存上限为：`M x 90% x 90% x 30%`。
 
 ## 常见问题
 

@@ -2,18 +2,15 @@
 
 本文介绍如何创建 Iceberg catalog 以及需要做哪些相应的配置。
 
-Iceberg catalog 是一个外部数据目录 (external catalog)。在 StarRocks 中，您可以通过该目录直接查询 Apache Iceberg 集群中的数据，无需数据导入或创建外部表。在查询数据时，StarRocks 会用到以下两个 Iceberg 组件：
-
-- **元数据服务**：用于将 Iceberg 元数据暴露出来供 StarRocks 的 FE 进行查询规划。
-- **存储系统**：用于存储 Iceberg 数据。数据文件以不同的格式存储在分布式文件系统或对象存储系统中。当 FE 将生成的查询计划分发给各个 BE 后，各个 BE 会并行扫描存储系统中的目标数据，并执行计算返回查询结果。
+Iceberg catalog 是一个外部数据目录 (external catalog)。StarRocks 2.4 及以上版本支持通过该目录直接查询 Apache Iceberg 集群中的数据，无需数据导入或创建外部表。
 
 ## 使用限制
 
-- StarRocks 当前支持查询如下格式的 Iceberg 数据文件：Parquet 和 ORC。
-- StarRocks 当前支持查询如下压缩格式的 Iceberg 数据文件：gzip、Zstd、LZ4 和 Snappy。
-- StarRocks 当前支持查询如下类型的 Iceberg 数据：BOOLEAN、INT、LONG、FLOAT、DOUBLE、DECIMAL(P, S)、DATE、TIME、TIMESTAMP、STRING、UUID、LIST、FIXED(L) 和 BINARY。注意查询命中不支持的数据类型（TIMESTAMPTZ、STRUCT 和 MAP）会报错。
-- StarRocks 当前支持查询 Versions 1 表 (Analytic Data Tables) 。暂不支持查询 Versions 2 表 (Row-level Deletes) 。有关两种表的详细信息，请参见 [Iceberg Table Spec](https://iceberg.apache.org/spec/)。
-- StarRocks 2.4 及以上版本支持创建 Iceberg catalog，以及使用 [DESC](/sql-reference/sql-statements/Utility/DESCRIBE.md) 语句查看 Iceberg 表结构。查看时，不支持的数据类型会显示成`unknown`。
+- StarRocks 支持查询如下格式的 Iceberg 数据文件：Parquet 和 ORC。
+- StarRocks 支持查询如下压缩格式的 Iceberg 数据文件：gzip、Zstd、LZ4 和 Snappy。
+- StarRocks 不支持查询 TIMESTAMPTZ 类型的 Iceberg 数据。注意查询命中不支持的数据类型时会报错。
+- StarRocks 当前支持查询 Versions 1 表 (Analytic Data Tables)，暂不支持查询 Versions 2 表 (Row-level Deletes)。有关两种表的详细信息，请参见 [Iceberg Table Spec](https://iceberg.apache.org/spec/)。
+- StarRocks 2.4 及以上版本支持创建 Iceberg catalog，以及使用 [DESC](/sql-reference/sql-statements/Utility/DESCRIBE.md) 语句查看 Iceberg 表结构。查看时，不支持的数据类型会显示成 `unknown`。
 
 ## 前提条件
 
@@ -30,10 +27,9 @@ CREATE EXTERNAL CATALOG catalog_name
 PROPERTIES ("key"="value", ...);
 ```
 
-> 注意
+> **注意**
 >
-> - 使用该创建语句无权限限制。
-> - 查询前，需要将 Hive metastore 节点域名和其 IP 的映射关系配置到 **/etc/hosts** 路径中，否则查询时可能会因为域名无法识别而访问失败。
+> 查询前，需要将 Hive metastore 节点域名和其 IP 的映射关系配置到 **/etc/hosts** 路径中，否则查询时可能会因为域名无法识别而访问失败。
 
 ### 参数说明
 
@@ -57,9 +53,7 @@ PROPERTIES ("key"="value", ...);
 
 #### 自定义元数据服务
 
-如使用自定义元数据服务，则您需要在 StarRocks 中开发一个 custom catalog 类，并实现相关接口，以保证 StarRocks 能够访问自定义元数据服务。Custom catalog 类需要继承抽象类 BaseMetastoreCatalog 。有关 custom catalog 开发和相关接口实现的具体信息，参考 [IcebergHiveCatalog](https://github.com/StarRocks/starrocks/blob/main/fe/fe-core/src/main/java/com/starrocks/external/iceberg/IcebergHiveCatalog.java)。开发完成后，您需要将 custom catalog 及其相关文件打包并放到所有 FE 节点的 **fe/lib** 路径下，然后重启所有 FE 节点，以便 FE 识别这个类。
-
-> 注意：custom catalog 类名不能与 StarRocks 中已存在的类名重复。
+如使用自定义元数据服务，则您需要在 StarRocks 中开发一个 custom catalog 类（custom catalog 类名不能与 StarRocks 中已存在的类名重复），并实现相关接口，以保证 StarRocks 能够访问自定义元数据服务。Custom catalog 类需要继承抽象类 BaseMetastoreCatalog 。有关 custom catalog 开发和相关接口实现的具体信息，参考 [IcebergHiveCatalog](https://github.com/StarRocks/starrocks/blob/main/fe/fe-core/src/main/java/com/starrocks/external/iceberg/IcebergHiveCatalog.java)。开发完成后，您需要将 custom catalog 及其相关文件打包并放到所有 FE 节点的 **fe/lib** 路径下，然后重启所有 FE 节点，以便 FE 识别这个类。
 
 以上操作完成后即可创建 Iceberg catalog 并配置其相关属性，具体如下：
 

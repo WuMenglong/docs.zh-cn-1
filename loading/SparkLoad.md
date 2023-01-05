@@ -20,9 +20,10 @@ Spark Load 任务的执行主要分为以下几个阶段：
 
 1. 用户向 FE 提交 Spark Load 任务；
 2. FE 调度提交 ETL 任务到 Spark 集群执行。
-3. Spark 集群执行 ETL 完成对导入数据的预处理。包括全局字典构建（BITMAP类型）、分区、排序、聚合等。
+3. Spark 集群执行 ETL 完成对导入数据的预处理。包括全局字典构建（BITMAP类型）、分区、排序、聚合等。预处理后的数据落盘 HDFS。
 4. ETL 任务完成后，FE 获取预处理过的每个分片的数据路径，并调度相关的 BE 执行 Push 任务。
-5. BE 通过 Broker 读取数据，转化为 StarRocks 存储格式。
+5. BE 通过 Broker 读取 HDFS 数据，转化为 StarRocks 存储格式。
+    > 如果选择不借助 Broker，则 BE 直接读取 HDFS 数据。
 6. FE 调度生效版本，完成导入任务。
 
 下图展示了 Spark Load 的主要流程：
@@ -33,7 +34,7 @@ Spark Load 任务的执行主要分为以下几个阶段：
 
 ## 基本操作
 
-使用 Spark Load导入数据，需要按照 `创建资源 -> 配置 Spark 客户端 -> 配置 YARN 客户端 -> 创建 Spark Load 导入任务` 流程执行，具体的各个部分介绍请参考下问描述。
+使用 Spark Load导入数据，需要按照 `创建资源 -> 配置 Spark 客户端 -> 配置 YARN 客户端 -> 创建 Spark Load 导入任务` 流程执行，具体的各个部分介绍请参考下面描述。
 
 ### 配置 ETL 集群
 
@@ -104,7 +105,7 @@ PROPERTIES
 );
 ~~~
 
-`spark0,spark1,spark2` 为 StarRocks 中配置的 Spark 资源的名字。
+`spark0`、`spark1` 和 `spark2` 为 StarRocks 中配置的 Spark 资源的名字。
 
 PROPERTIES 是 Spark 资源相关参数，如下：
 
@@ -367,13 +368,13 @@ CANCEL LOAD FROM db1 WHERE LABEL = "label1";
 
 **FE 配置:** 下面配置属于 Spark Load 的系统级别配置，也就是作用于所有 Spark Load 导入任务的配置。主要通过修改 fe.conf 来调整配置值。
 
-* enable-spark-load：开启 Spark load 和创建 resource 功能。默认为 false，关闭此功能。
-* spark-load-default-timeout-second：任务默认超时时间为 86400 秒（1 天）。
-* spark-home-default-dir：spark 客户端路径 (fe/lib/spark2x) 。
-* spark-resource-path：打包好的 spark 依赖文件路径（默认为空）。
-* spark-launcher-log-dir：spark 客户端的提交日志存放的目录（fe/log/spark-launcher-log）。
-* yarn-client-path：yarn 二进制可执行文件路径 (fe/lib/yarn-client/hadoop/bin/yarn) 。
-* yarn-config-dir：yarn 配置文件生成路径 (fe/lib/yarn-config) 。
+* `enable_spark_load`：开启 Spark load 和创建 resource 功能。默认为 false，关闭此功能。
+* `spark_load_default_timeout_second`：任务默认超时时间为 86400 秒（1 天）。
+* `spark_home_default_dir`：spark 客户端路径 (fe/lib/spark2x) 。
+* `spark_resource_path`：打包好的 spark 依赖文件路径（默认为空）。
+* `spark_launcher_log_dir`：spark 客户端的提交日志存放的目录（fe/log/spark-launcher-log）。
+* `yarn_client_path`：yarn 二进制可执行文件路径 (fe/lib/yarn-client/hadoop/bin/yarn) 。
+* `yarn_config_dir`：yarn 配置文件生成路径 (fe/lib/yarn-config) 。
 
 ---
 

@@ -127,8 +127,6 @@ CREATE EXTERNAL TABLE elastic_search_external_table
     k5 DATETIME
 )
 ENGINE=ELASTICSEARCH
-PARTITION BY RANGE(k1)
-()
 PROPERTIES 
 (
     "hosts" = "http://192.168.0.1:8200,http://192.168.0.2:8200",
@@ -476,17 +474,17 @@ StarRocks 支持对目标表进行谓词下推，把过滤条件推给目标表�
 StarRocks 使用 Hive 资源来管理使用到的 Hive 集群相关配置，如 Hive Metastore 地址等，一个 Hive 资源对应一个 Hive 集群。创建 Hive 外表的时候需要指定使用哪个 Hive 资源。
 
 ~~~sql
--- 创建一个名为 hive0 的 Hive 资源
+-- 创建一个名为 hive0 的 Hive 资源。
 CREATE EXTERNAL RESOURCE "hive0"
 PROPERTIES (
   "type" = "hive",
   "hive.metastore.uris" = "thrift://10.10.44.98:9083"
 );
 
--- 查看 StarRocks 中创建的资源
+-- 查看 StarRocks 中创建的资源。
 SHOW RESOURCES;
 
--- 删除名为 hive0 的资源
+-- 删除名为 hive0 的资源。
 DROP RESOURCE "hive0";
 ~~~
 
@@ -512,7 +510,7 @@ PROPERTIES (
   "key" = "value"
 );
 
--- 例子：创建 hive0 资源对应的 Hive 集群中 rawdata 数据库下的 profile_parquet_p7 表的外表
+-- 例子：创建 hive0 资源对应的 Hive 集群中 rawdata 数据库下的 profile_parquet_p7 表的外表。
 CREATE EXTERNAL TABLE `profile_wos_p7` (
   `id` bigint NULL,
   `first_id` varchar(200) NULL,
@@ -564,16 +562,16 @@ PROPERTIES (
 
 说明：
 
-* Hive 表 Schema 变更 **不会自动同步**，需要在 StarRocks 中重建 Hive 外表。
 * 支持 Hive 的存储格式为 Parquet，ORC 和 CSV 格式。如果为 CSV 格式，则暂不支持使用引号作为转义字符。
 * 压缩格式支持 Snappy 和 LZ4。
+* Hive 外表可查询的最大字符串长度为 1 MB。超过 1 MB 时，查询设置成 Null。
 
 <br/>
 
 ### 查询 Hive 外表
 
 ~~~sql
--- 查询 profile_wos_p7 的总行数
+-- 查询 profile_wos_p7 的总行数。
 select count(*) from profile_wos_p7;
 ~~~
 
@@ -648,11 +646,11 @@ select count(*) from profile_wos_p7;
 <configuration>
    <property>
       <name>fs.oss.impl</name>
-      <value>org.apache.hadoop.fs.aliyun.oss.AliyunOSSFileSystem</value>
+      <value>com.aliyun.jindodata.oss.JindoOssFileSystem</value>
    </property>
    <property>
       <name>fs.AbstractFileSystem.oss.impl</name>
-      <value>com.aliyun.emr.fs.oss.OSS</value>
+      <value>com.aliyun.jindodata.oss.OSS</value>
    </property>
    <property>
         <name>fs.oss.accessKeyId</name>
@@ -688,13 +686,13 @@ select count(*) from profile_wos_p7;
 
 ### 缓存更新
 
-Hive Table 的 Partition 统计信息以及 Partition 下面的文件信息可以缓存到 StarRocks FE 中，缓存的内存结构为 Guava LoadingCache。您可以在 fe.conf 文件中通过设置 `hive_meta_cache_refresh_interval_s` 参数修改缓存自动刷新的间隔时间（默认值为 `7200`，单位：秒），也可以通过设置 `hive_meta_cache_ttl_s` 参数修改缓存的失效时间（默认值为 `86400`，单位：秒）。修改后需重启 FE 生效。
+Hive Table 的 Partition 统计信息以及 Partition 下面的文件信息可以缓存到 StarRocks FE 中，缓存的内存结构为 Guava LoadingCache。您可以在 ·fe`conf` 文件中通过设置 `hive_meta_cache_refresh_interval_s` 参数修改缓存自动刷新的间隔时间（默认值为 `7200`，单位：秒），也可以通过设置 `hive_meta_cache_ttl_s` 参数修改缓存的失效时间（默认值为 `86400`，单位：秒）。修改后需重启 FE 生效。
 
 #### 手动更新元数据缓存
 
 * 手动刷新元数据信息：
-  1. hive 中新增或者删除分区时，需要刷新 **表** 的元数据信息：`REFRESH EXTERNAL TABLE hive_t`，其中 hive_t 是 starrocks 中的外表名称。
-  2. hive 中向某些 partition 中新增数据时，需要 **指定 partition** 进行刷新：`REFRESH EXTERNAL TABLE hive_t PARTITION ('k1=01/k2=02', 'k1=03/k2=04')`，其中 hive_t 是 starrocks 中的外表名称，'k1 = 01/k2 = 02'、 'k1 = 03/k2 = 04'是 hive 中的 partition 名称。
+  1. Hive 中新增或者删除分区时，需要刷新 **表** 的元数据信息：`REFRESH EXTERNAL TABLE hive_t`，其中 `hive_t` 是 StarRocks 中的外表名称。
+  2. Hive 中向某些 partition 新增数据时，需要 **指定 partition** 进行刷新：`REFRESH EXTERNAL TABLE hive_t PARTITION ('k1=01/k2=02', 'k1=03/k2=04')`，其中 `hive_t` 是 StarRocks 中的外表名称，'k1 = 01/k2 = 02'、 'k1 = 03/k2 = 04'是 hive 中的 partition 名称。
   3. 在执行 `REFRESH EXTERNAL TABLE hive_t` 命令时，StarRocks 会先检查 Hive 外部表中的列信息和 Hive Metastore 返回的 Hive 表中的列信息是否一致。若发现 Hive 表的 schema 有修改，如增加列或减少列，那么 StarRocks 会将修改的信息同步到 Hive 外部表。同步后，Hive 外部表的列顺序和 Hive 表的列顺序保持一致，且分区列为最后一列。
   
 #### 自动增量更新元数据缓存
@@ -745,7 +743,7 @@ Hive Table 的 Partition 统计信息以及 Partition 下面的文件信息可�
    | 参数值                             | 说明                                      | 默认值 |
    | --- | --- | ---|
    | enable_hms_events_incremental_sync | 是否开启元数据自动增量同步功能            | false |
-   | hms_events_polling_interval_ms     | StarRocks 拉取 Hive Metastore Event 事件间隔 | 5 秒 |
+   | hms_events_polling_interval_ms     | StarRocks 拉取 Hive Metastore Event 事件间隔 | 5000 毫秒 |
    | hms_events_batch_size_per_rpc      | StarRocks 每次拉取 Event 事件的最大数量      | 500 |
    | enable_hms_parallel_process_evens  | 对接收的 Events 是否并行处理                | true |
    | hms_process_events_parallel_num    | 处理 Events 事件的并发数                    | 4 |

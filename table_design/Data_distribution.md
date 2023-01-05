@@ -32,10 +32,10 @@ StarRocks 支持如下两种数据分布方式：
 
 ```SQL
 CREATE TABLE site_access(
-site_id INT DEFAULT '10',
-city_code SMALLINT,
-user_name VARCHAR(32) DEFAULT '',
-pv BIGINT SUM DEFAULT '0'
+    site_id INT DEFAULT '10',
+    city_code SMALLINT,
+    user_name VARCHAR(32) DEFAULT '',
+    pv BIGINT SUM DEFAULT '0'
 )
 AGGREGATE KEY(site_id, city_code, user_name)
 DISTRIBUTED BY HASH(site_id) BUCKETS 10;
@@ -45,31 +45,39 @@ DISTRIBUTED BY HASH(site_id) BUCKETS 10;
 
 ```SQL
 CREATE TABLE site_access(
-event_day DATE,
-site_id INT DEFAULT '10',
-city_code VARCHAR(100),
-user_name VARCHAR(32) DEFAULT '',
-pv BIGINT SUM DEFAULT '0'
+    event_day DATE,
+    site_id INT DEFAULT '10',
+    city_code VARCHAR(100),
+    user_name VARCHAR(32) DEFAULT '',
+    pv BIGINT SUM DEFAULT '0'
 )
 AGGREGATE KEY(event_day, site_id, city_code, user_name)
 PARTITION BY RANGE(event_day)
 (
-PARTITION p1 VALUES LESS THAN ("2020-01-31"),
-PARTITION p2 VALUES LESS THAN ("2020-02-29"),
-PARTITION p3 VALUES LESS THAN ("2020-03-31")
+    PARTITION p1 VALUES LESS THAN ("2020-01-31"),
+    PARTITION p2 VALUES LESS THAN ("2020-02-29"),
+    PARTITION p3 VALUES LESS THAN ("2020-03-31")
 )
 DISTRIBUTED BY HASH(site_id) BUCKETS 10;
 ```
 
 #### 分区
 
-分区用于将数据划分成不同的区间。分区的主要作用是将一张表按照分区键拆分成不同的管理单元，针对每一个管理单元选择相应的存储策略，比如副本数、冷热策略和存储介质等。StarRocks 支持在一个集群内使用多种存储介质，您可以将新数据所在分区放在 SSD 盘上，利用 SSD 的优秀的随机读写性能来提高查询性能，将旧数据存放在 SATA 盘上，以节省数据存储的成本。
+分区用于将数据划分成不同的区间。分区的主要作用是将一张表按照分区键拆分成不同的管理单元，针对每一个管理单元选择相应的存储策略，比如副本数、分桶数、冷热策略和存储介质等。StarRocks 支持在一个集群内使用多种存储介质，您可以将新数据所在分区放在 SSD 盘上，利用 SSD 的优秀的随机读写性能来提高查询性能，将旧数据存放在 SATA 盘上，以节省数据存储的成本。
 
 业务系统中⼀般会选择根据时间进行分区，以优化大量删除过期数据带来的性能问题，同时也方便冷热数据分级存储。
 
 StarRocks 支持动态分区。您可以按需为新数据动态创建分区，同时 StarRocks 会自动删除过期分区，从而确保数据的实效性，实现对分区的生命周期管理（Time to Life，简称 “TTL”），大幅减少运维管理的成本。
 
 StarRocks 还支持手动创建分区和批量创建分区。
+
+分区单位的选择，需要综合考虑数据量、查询特点、数据管理粒度等因素。
+
+实例1: 表单月数据量很小，可以按月分区，相比于按天分区，可以减少元数据数量，从而减少元数据管理和调度的资源消耗。
+
+实例2: 表单月数据量很大，而大部分查询条件精确到天，如果按天分区，可以做有效的分区裁减，减少查询扫描的数据量。
+
+实例3: 数据要求按天过期，可以按天分区。
 
 #### 分桶
 
@@ -81,26 +89,26 @@ StarRocks 还支持手动创建分区和批量创建分区。
 
 ### 动态分区
 
-推荐您使用[动态分区](./dynamic_partition.md)。您可以按需为新数据动态创建分区，同时 StarRocks 会⾃动删除过期分区，从而确保数据的实效性，实现对分区的⽣命周期管理（Time to Life，简称 “TTL”），⼤幅减少运维管理的成本。
+推荐您使用[动态分区](./dynamic_partitioning.md)。您可以按需为新数据动态创建分区，同时 StarRocks 会⾃动删除过期分区，从而确保数据的实效性，实现对分区的⽣命周期管理（Time to Life，简称 “TTL”），⼤幅减少运维管理的成本。
 
 ### 手动创建分区
 
-选择合理的分区键可以有效的裁剪扫描的数据量。**目前仅支持分区键的数据类型为日期和整数类型**。在实际业务场景中，一般从数据管理的角度选择分区键，常见的分区键为时间或者区域。按照分区键划分数据后，单个分区原始数据量建议不要超过 100 GB。
+选择合理的分区键可以有效的裁剪扫描的数据量。**目前仅支持分区键的数据类型为日期和整数类型**。在实际业务场景中，一般从数据管理的角度选择分区键，常见的分区键为时间或者区域。
 
 ```SQL
 CREATE TABLE site_access(
-event_day DATE,
-site_id INT DEFAULT '10',
-city_code VARCHAR(100),
-user_name VARCHAR(32) DEFAULT '',
-pv BIGINT SUM DEFAULT '0'
+    event_day DATE,
+    site_id INT DEFAULT '10',
+    city_code VARCHAR(100),
+    user_name VARCHAR(32) DEFAULT '',
+    pv BIGINT SUM DEFAULT '0'
 )
 AGGREGATE KEY(event_day, site_id, city_code, user_name)
 PARTITION BY RANGE(event_day)
 (
-PARTITION p1 VALUES LESS THAN ("2020-01-31"),
-PARTITION p2 VALUES LESS THAN ("2020-02-29"),
-PARTITION p3 VALUES LESS THAN ("2020-03-31")
+    PARTITION p1 VALUES LESS THAN ("2020-01-31"),
+    PARTITION p2 VALUES LESS THAN ("2020-02-29"),
+    PARTITION p3 VALUES LESS THAN ("2020-03-31")
 )
 DISTRIBUTED BY HASH(site_id) BUCKETS 10;
 ```
@@ -140,9 +148,9 @@ PROPERTIES (
 
 ```SQL
 PARTITION BY RANGE (datekey) (
-PARTITION p20210101 VALUES [('2021-01-01'), ('2021-01-02')),
-PARTITION p20210102 VALUES [('2021-01-02'), ('2021-01-03')),
-PARTITION p20210103 VALUES [('2021-01-03'), ('2021-01-04'))
+    PARTITION p20210101 VALUES [('2021-01-01'), ('2021-01-02')),
+    PARTITION p20210102 VALUES [('2021-01-02'), ('2021-01-03')),
+    PARTITION p20210103 VALUES [('2021-01-03'), ('2021-01-04'))
 )
 ```
 
@@ -175,15 +183,15 @@ PROPERTIES (
 
 ```SQL
 PARTITION BY RANGE (datekey) (
-PARTITION p2019 VALUES [('2019-01-01'), ('2020-01-01')),
-PARTITION p2020 VALUES [('2020-01-01'), ('2021-01-01')),
-PARTITION p202101 VALUES [('2021-01-01'), ('2021-02-01')),
-PARTITION p202102 VALUES [('2021-02-01'), ('2021-03-01')),
-PARTITION p202103 VALUES [('2021-03-01'), ('2021-04-01')),
-PARTITION p202104 VALUES [('2021-04-01'), ('2021-05-01')),
-PARTITION p20210501 VALUES [('2021-05-01'), ('2021-05-02')),
-PARTITION p20210502 VALUES [('2021-05-02'), ('2021-05-03')),
-PARTITION p20210503 VALUES [('2021-05-03'), ('2021-05-04'))
+    PARTITION p2019 VALUES [('2019-01-01'), ('2020-01-01')),
+    PARTITION p2020 VALUES [('2020-01-01'), ('2021-01-01')),
+    PARTITION p202101 VALUES [('2021-01-01'), ('2021-02-01')),
+    PARTITION p202102 VALUES [('2021-02-01'), ('2021-03-01')),
+    PARTITION p202103 VALUES [('2021-03-01'), ('2021-04-01')),
+    PARTITION p202104 VALUES [('2021-04-01'), ('2021-05-01')),
+    PARTITION p20210501 VALUES [('2021-05-01'), ('2021-05-02')),
+    PARTITION p20210502 VALUES [('2021-05-02'), ('2021-05-03')),
+    PARTITION p20210503 VALUES [('2021-05-03'), ('2021-05-04'))
 )
 ```
 
@@ -191,7 +199,7 @@ PARTITION p20210503 VALUES [('2021-05-03'), ('2021-05-04'))
 
 当分区键为整数类型时，建表时通过 START、END 指定批量分区的开始值和结束值，EVERY 子句指定分区增量值。
 
-> 说明：分区键的值需要使用英文引号包裹，而 EVERY 子句中的分区增量值不用英文引号包裹。
+> 说明：START、END 所指定的分区列的值需要使用英文引号包裹，而 EVERY 子句中的分区增量值不用英文引号包裹。
 
 如下示例中，批量分区的开始值为 `1` 和结束值为 `5`，分区增量值为 `1`：
 
@@ -218,10 +226,10 @@ PROPERTIES (
 
 ```SQL
 PARTITION BY RANGE (datekey) (
-PARTITION p1 VALUES [("1"), ("2")),
-PARTITION p2 VALUES [("2"), ("3")),
-PARTITION p3 VALUES [("3"), ("4")),
-PARTITION p4 VALUES [("4"), ("5"))
+    PARTITION p1 VALUES [("1"), ("2")),
+    PARTITION p2 VALUES [("2"), ("3")),
+    PARTITION p3 VALUES [("3"), ("4")),
+    PARTITION p4 VALUES [("4"), ("5"))
 )
 ```
 
@@ -285,18 +293,18 @@ SHOW PARTITIONS FROM site_access;
 
 ```SQL
 CREATE TABLE site_access(
-event_day DATE,
-site_id INT DEFAULT '10',
-city_code VARCHAR(100),
-user_name VARCHAR(32) DEFAULT '',
-pv BIGINT SUM DEFAULT '0'
+    event_day DATE,
+    site_id INT DEFAULT '10',
+    city_code VARCHAR(100),
+    user_name VARCHAR(32) DEFAULT '',
+    pv BIGINT SUM DEFAULT '0'
 )
 AGGREGATE KEY(event_day, site_id, city_code, user_name)
 PARTITION BY RANGE(event_day)
 (
-PARTITION p1 VALUES LESS THAN ("2020-01-31"),
-PARTITION p2 VALUES LESS THAN ("2020-02-29"),
-PARTITION p3 VALUES LESS THAN ("2020-03-31")
+    PARTITION p1 VALUES LESS THAN ("2020-01-31"),
+    PARTITION p2 VALUES LESS THAN ("2020-02-29"),
+    PARTITION p3 VALUES LESS THAN ("2020-03-31")
 )
 DISTRIBUTED BY HASH(site_id) BUCKETS 10;
 ```
@@ -316,10 +324,10 @@ where site_id = 54321;
 ```SQL
 CREATE TABLE site_access
 (
-site_id INT DEFAULT '10',
-city_code SMALLINT,
-user_name VARCHAR(32) DEFAULT '',
-pv BIGINT SUM DEFAULT '0'
+    site_id INT DEFAULT '10',
+    city_code SMALLINT,
+    user_name VARCHAR(32) DEFAULT '',
+    pv BIGINT SUM DEFAULT '0'
 )
 AGGREGATE KEY(site_id, city_code, user_name)
 DISTRIBUTED BY HASH(site_id,city_code) BUCKETS 10;
@@ -338,10 +346,8 @@ DISTRIBUTED BY HASH(site_id,city_code) BUCKETS 10;
 在 StarRocks 中，分桶是实际物理文件组织的单元。自 2.4 版本起，StarRocks 提供了自适应的 Tablet 并行扫描能力，即一个查询中涉及到的任意一个 Tablet 可能是由多个线程并行地分段扫描，减少了 Tablet 数量对查询能力的限制，从而可以简化对分桶数量的设定。简化后的分桶方式可以是：首先预估每个分区的数据量，然后按照每 10 GB 原始数据一个 Tablet 计算，从而确定分桶数量。
 
 > 注意：
->
-> - 您需要执行 `SET GLOBAL enable_tablet_internal_parallel;`，开启并行扫描 Tablet。
->
-> - 不支持修改已创建的分区的分桶数量，支持在增加分区时为新增分区设置新的分桶数量。
+> 您需要确保系统变量 `SET GLOBAL enable_tablet_internal_parallel`为 `true`，以开启并行扫描 Tablet。
+> 不支持修改已创建的分区的分桶数量，支持在增加分区时为新增分区设置新的分桶数量。
 
 ## 最佳实践
 
@@ -358,3 +364,7 @@ DISTRIBUTED BY HASH(site_id,city_code) BUCKETS 10;
 - **高吞吐**
   
   尽量把数据打散，让集群以更高的并发扫描数据，完成相应计算。
+
+- **元数据管理**
+
+  Tablet 过多会增加 FE/BE 的元数据管理和调度的资源消耗。
