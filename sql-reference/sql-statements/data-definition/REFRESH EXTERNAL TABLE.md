@@ -5,7 +5,7 @@
 该语句用于更新缓存在 StarRocks 中的 Apache Hive™ 和 Apache Hudi 元数据，其主要有以下两个使用场景：
 
 - **外部表**：使用 Hive 外部表和 Hudi 外部表查询 Hive 和 Hudi 数据时， 可使用该语句更新缓存的 Hive 和 Hudi 元数据。
-- **External catalog**：使用 [Hive catalog](/using_starrocks/catalog/hive_catalog.md) 和 [Hudi catalog](/using_starrocks/catalog/hudi_catalog.md) 查询 Hive 和 Hudi 数据时，可使用该语句更新缓存的 Hive 和 Hudi 元数据。
+- **External catalog**：使用 [Hive catalog](/data_source/catalog/hive_catalog.md) 和 [Hudi catalog](/data_source/catalog/hudi_catalog.md) 查询 Hive 和 Hudi 数据时，可使用该语句更新缓存的 Hive 和 Hudi 元数据。
 
 ## 基本概念
 
@@ -46,7 +46,7 @@
 
 ## 注意事项
 
-只有拥有`ALTER_PRIV`权限的用户才可以执行该语句更新缓存的元数据。
+只有拥有 `ALTER_PRIV` 权限的用户才可以执行该语句更新缓存的元数据。
 
 ## 示例
 
@@ -54,13 +54,13 @@
 
 ### 外部表
 
-示例一：更新外部表 `hive1`对应的 Hive 表元数据。
+示例一：更新外部表 `hive1` 对应的 Hive 表元数据。
 
 ```SQL
 REFRESH EXTERNAL TABLE hive1;
 ```
 
-示例二：更新外部表`hudi1`对应的 Hudi 表`p1`和`p2`分区元数据。
+示例二：更新外部表 `hudi1` 对应的 Hudi 表 `p1` 和 `p2` 分区元数据。
 
 ```SQL
 REFRESH EXTERNAL TABLE hudi1
@@ -69,7 +69,7 @@ PARTITION ('p1', 'p2');
 
 ### External catalog
 
-示例一：更新缓存的 Hive 表`hive_table`的元数据。
+示例一：更新缓存的 Hive 表 `hive_table` 的元数据。
 
 ```SQL
 REFRESH EXTERNAL TABLE hive_catalog.hive_db.hive_table;
@@ -82,7 +82,7 @@ USE hive_catalog.hive_db;
 REFRESH EXTERNAL TABLE hive_table;
 ```
 
-示例二：更新缓存的 Hudi 表`hudi_table`分区`p1`和`p2`的元数据。
+示例二：更新缓存的 Hudi 表 `hudi_table` 分区 `p1` 和 `p2` 的元数据。
 
 ```SQL
 REFRESH EXTERNAL TABLE hudi_catalog.hudi_db.hudi_table

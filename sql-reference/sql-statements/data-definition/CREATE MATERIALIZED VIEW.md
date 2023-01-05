@@ -2,7 +2,7 @@
 
 ## 功能
 
-创建物化视图。创建物化视图是一个异步的操作。CREATE MATERIALIZED VIEW 命令执行成功即代表创建物化视图的任务提交成功。您可以通过 [SHOW ALTER](../sql-reference/sql-statements/data-manipulation/SHOW%20ALTER.md) 命令查看当前数据库中物化视图的构建状态。关于物化视图适用的场景请参考 [物化视图](../using_starrocks/Materialized_view.md)。
+创建物化视图。创建物化视图是一个异步的操作。CREATE MATERIALIZED VIEW 命令执行成功即代表创建物化视图的任务提交成功。您可以通过 [SHOW ALTER](../sql-reference/sql-statements/data-manipulation/SHOW%20ALTER.md) 命令查看当前数据库中物化视图的构建状态。关于物化视图适用的场景请参考 [物化视图](../../../using_starrocks/Materialized_view.md)。
 
 > **注意**
 >
@@ -19,12 +19,12 @@ StarRocks 自 v2.4 起支持多表物化视图。多表物化视图与先前版�
 
 ```SQL
 CREATE MATERIALIZED VIEW [IF NOT EXISTS] [database.]mv_name
-AS (query)
 [distribution_desc]
 [REFRESH refresh_scheme_desc]
 [partition_expression]
 [COMMENT ""]
-[PROPERTIES ("key"="value", ...)];
+[PROPERTIES ("key"="value", ...)]
+AS (query);
 ```
 
 ## 参数
@@ -74,7 +74,7 @@ SELECT select_expr[, select_expr ...]
   - 如果不指定排序列，则系统根据规则自动补充排序列。 如果物化视图是聚合类型，则所有的分组列自动补充为排序列。 如果物化视图是非聚合类型，则前 36 个字节自动补充为排序列。如果自动补充的排序个数小于 3 个，则前三个作为排序列。
   - 如果查询语句中包含分组列，则排序列必须和分组列一致。
 
-**distribution_desc**（选填）
+**distribution_desc**（建立异步多表物化视图时为**必填**）
 
 物化视图的分桶方式，形如 `DISTRIBUTED BY HASH (k1[,k2 ...]) [BUCKETS num]`。
 
@@ -379,14 +379,14 @@ mysql> desc duplicate_table;
 +-------+--------+------+------+---------+-------+
 ```
 
-1. 创建一个仅包含原始表 （k1, k2）列的物化视图。
+1. 创建一个仅包含原始表 （k1，k2）列的物化视图。
 
     ```sql
     create materialized view k1_k2 as
     select k1, k2 from duplicate_table;
     ```
 
-    物化视图的 schema 如下图，物化视图仅包含两列 k1, k2 且不带任何聚合。
+    物化视图的 schema 如下图，物化视图仅包含两列 k1、k2 且不带任何聚合。
 
     ```sql
     +-----------------+-------+--------+------+------+---------+-------+
@@ -404,7 +404,7 @@ mysql> desc duplicate_table;
     select k2, k1 from duplicate_table order by k2;
     ```
 
-    物化视图的 schema 如下图，物化视图仅包含两列 k2, k1，其中 k2 列为排序列，不带任何聚合。
+    物化视图的 schema 如下图，物化视图仅包含两列 k2、k1，其中 k2 列为排序列，不带任何聚合。
 
     ```sql
     +-----------------+-------+--------+------+-------+---------+-------+
@@ -415,16 +415,16 @@ mysql> desc duplicate_table;
     +-----------------+-------+--------+------+-------+---------+-------+
     ```
 
-3. 创建一个以 k1, k2 分组，k3 列为 SUM 聚合的物化视图。
+3. 创建一个以 k1，k2 分组，k3 列为 SUM 聚合的物化视图。
 
     ```sql
     create materialized view k1_k2_sumk3 as
     select k1, k2, sum(k3) from duplicate_table group by k1, k2;
     ```
 
-    物化视图的 schema 如下图，物化视图包含两列 k1, k2，sum(k3) 其中 k1, k2 为分组列，sum(k3) 为根据 k1, k2 分组后的 k3 列的求和值。
+    物化视图的 schema 如下图，物化视图包含两列 k1、k2，sum(k3) 其中 k1、k2 为分组列，sum(k3) 为根据 k1、k2 分组后的 k3 列的求和值。
 
-    由于物化视图没有声明排序列，且物化视图带聚合数据，系统默认补充分组列 k1, k2 为排序列。
+    由于物化视图没有声明排序列，且物化视图带聚合数据，系统默认补充分组列 k1、k2 为排序列。
 
     ```sql
     +-----------------+-------+--------+------+-------+---------+-------+
@@ -443,7 +443,7 @@ mysql> desc duplicate_table;
     select k1, k2, k3, k4 from duplicate_table group by k1, k2, k3, k4;
     ```
 
-    物化视图 schema 如下图，物化视图包含 k1, k2, k3, k4 列，且不存在重复行。
+    物化视图 schema 如下图，物化视图包含 k1、k2、k3、k4 列，且不存在重复行。
 
     ```sql
     +-----------------+-------+--------+------+-------+---------+-------+
@@ -457,7 +457,7 @@ mysql> desc duplicate_table;
 
     ```
 
-5. 创建一个不声明排序列的非聚合型物化视图
+5. 创建一个不声明排序列的非聚合型物化视图。
 
     all_type_table 的 schema 如下：
 
@@ -475,15 +475,15 @@ mysql> desc duplicate_table;
     +-------+--------------+------+-------+---------+-------+
     ```
 
-    物化视图包含 k3, k4, k5, k6, k7 列，且不声明排序列，则创建语句如下：
+    物化视图包含 k3、k4、k5、k6、k7 列，且不声明排序列，则创建语句如下：
 
     ```sql
     create materialized view mv_1 as
     select k3, k4, k5, k6, k7 from all_type_table;
     ```
 
-    系统默认补充的排序列为 k3, k4, k5 三列。这三列类型的字节数之和为 4(INT) + 8(BIGINT) + 16(DECIMAL) = 28 < 36。所以补充的是这三列作为排序列。
-    物化视图的 schema 如下，可以看到其中 k3, k4, k5 列的 key 字段为 true，也就是排序列。k6, k7 列的 key 字段为 false，也就是非排序列。
+    系统默认补充的排序列为 k3、k4、k5 三列。这三列类型的字节数之和为 4(INT) + 8(BIGINT) + 16(DECIMAL) = 28 < 36。所以补充的是这三列作为排序列。
+    物化视图的 schema 如下，可以看到其中 k3、k4、k5 列的 key 字段为 true，也就是排序列。k6、k7 列的 key 字段为 false，也就是非排序列。
 
     ```sql
     +----------------+-------+--------------+------+-------+---------+-------+

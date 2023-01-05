@@ -33,7 +33,7 @@ Broker Load 是一种异步的导入方式，创建导入作业的语句没报�
 
 ## 7. 导入报 "failed to send batch"或"TabletWriter add batch with unknown id" 错误应该如何处理？
 
-该错误由数据写入超时而引起。需要修改 BE 上的 `query_timeout` 和 `streaming_load_rpc_max_alive_time_sec` 参数的配置。具体请参考 [BE 配置](/loading/Loading_intro.md)。
+该错误由数据写入超时而引起。需要修改系统变量 `query_timeout` 和 BE 配置项 `streaming_load_rpc_max_alive_time_sec` 的配置。具体请参考 [系统变量](/reference/System_variable.md) 和 [配置 BE 静态参数](/administration/Configuration.md#配置-be-静态参数)。
 
 ## 8. 导入报 "LOAD-RUN-FAIL; msg:OrcScannerAdapter::init_include_columns. col name = xxx not found" 错误应该如何处理？
 
@@ -48,7 +48,7 @@ SET
 )
 ```
 
-上述示例，表示将 Parquet 或 ORC 文件中以 `tmp_c1` 和 `tmp_c2` 为列名的列，分别映射到 StarRocks 表中的 `name` 和 `id` 列。如果没有使用 `SET` 子句, 则以 `column_list` 参数中指定的列作为映射。具体请参见 [BROKER LOAD](/sql-reference/sql-statements/data-manipulation/BROKER%20LOAD.md)。
+上述示例，表示将 Parquet 或 ORC 文件中以 `tmp_c1` 和 `tmp_c2` 为列名的列，分别映射到 StarRocks 表中的 `name` 和 `id` 列。如果没有使用 `SET` 子句，则以 `column_list` 参数中指定的列作为映射。具体请参见 [BROKER LOAD](/sql-reference/sql-statements/data-manipulation/BROKER%20LOAD.md)。
 
 > 注意：如果导入的是 Apache Hive™ 版本直接生成的 ORC 文件，并且 ORC 文件中的表头并 Hive 表的元数据，而是 `(_col0, _col1, _col2, ...)`，可能导致 "Invalid Column Name" 错误。这时候需要使用 `SET` 子句设置列转换规则。
 

@@ -2,7 +2,7 @@
 
 ## 功能
 
-该语句用于对已有的 table 进行修改。
+该语句用于修改已有 table。
 
 ## 语法
 
@@ -16,10 +16,10 @@ alter_clause1[, alter_clause2, ...];
 其中 **alter_clause** 分为 partition、rollup、schema change、rename、index 和 swap 六种操作，不同操作的应用场景为：
 
 * partition: 修改分区属性，删除分区，增加分区。
-* rollup: 创建或删除 rollup index，
+* rollup: 创建或删除 rollup index。
 * schema change: 增加列，删除列，调整列顺序，修改列类型。
 * rename: 修改表名，rollup index 名称，修改 partition 名称，注意列名不支持修改。
-* index: 修改索引(目前支持 bitmap 索引)，
+* index: 修改索引(目前支持 bitmap 索引)。
 * swap: 原子替换两张表。
 
 > 说明：
@@ -48,7 +48,7 @@ partition_desc ["key"="value"]
 2. 分区为左闭右开区间，如果用户仅指定右边界，系统会自动确定左边界。
 3. 如果没有指定分桶方式，则自动使用建表使用的分桶方式。
 4. 如指定分桶方式，只能修改分桶数，不可修改分桶方式或分桶列。
-5. `["key" = "value"]` 部分可以设置分区的一些属性，具体说明见 [CREATE TABLE](../data-definition/CREATE%20TABLE.md)
+5. `["key" = "value"]` 部分可以设置分区的一些属性，具体说明见 [CREATE TABLE](../data-definition/CREATE%20TABLE.md)。
 
 #### 删除分区
 
@@ -66,8 +66,8 @@ DROP PARTITION [IF EXISTS] partition_name [FORCE];
 注意：
 
 1. 使用分区方式的表至少要保留一个分区。
-2. 执行 `DROP PARTITION` 一段时间内，可以通过 RECOVER 语句恢复被删除的分区。详见 RECOVER 语句
-3. 如果执行 `DROP PARTITION FORCE`，则系统不会检查该分区是否存在未完成的事务，分区将直接被删除并且不能被恢复，一般不建议执行此操作
+2. 执行 `DROP PARTITION` 一段时间内，可以通过 RECOVER 语句恢复被删除的分区。详见 [RECOVER](https://docs.starrocks.io/zh-cn/latest/sql-reference/sql-statements/data-definition/RECOVER) 语句。
+3. 如果执行 `DROP PARTITION FORCE`，则系统不会检查该分区是否存在未完成的事务，分区将直接被删除并且不能被恢复，一般不建议执行此操作。
 
 #### 增加临时分区
 
@@ -82,7 +82,7 @@ partition_desc ["key"="value"]
 
 注意：
 
-1. 详细使用信息请查阅[临时分区](../../../using_starrocks/Temporary_partition.md)
+详细使用信息请查阅[临时分区](../../../table_design/Temporary_partition.md)。
 
 #### 使用临时分区替换原分区
 
@@ -99,7 +99,7 @@ partition_desc ["key"="value"]
 
 注意：
 
-1. 详细使用信息请查阅[临时分区](../../../using_starrocks/Temporary_partition.md)
+详细使用信息请查阅[临时分区](../../../table_design/Temporary_partition.md)。
 
 #### 删除临时分区
 
@@ -112,7 +112,7 @@ DROP TEMPORARY PARTITION partition_name;
 
 注意：
 
-1. 详细使用信息请查阅[临时分区](../../../using_starrocks/Temporary_partition.md)
+详细使用信息请查阅[临时分区](../../../table_design/Temporary_partition.md)。
 
 #### 修改分区属性
 
@@ -137,7 +137,7 @@ MODIFY PARTITION p1|(p1[, p2, ...]) SET ("key" = "value", ...);
 
 #### 创建 rollup index
 
-**RollUp 表索引**: shortkey index 可加速数据查找，但 shortkey index 依赖维度列排列次序. 如果使用非前缀的维度列构造查找谓词， 用户可以为数据表创建若干 RollUp 表索引。 RollUp 表索引的数据组织和存储和数据表相同, 但 RollUp 表拥有自身的 shortkey index. 用户创建 RollUp 表索引时， 可选择聚合的粒度，列的数量， 维度列的次序。 使频繁使用的查询条件能够命中相应的 RollUp 表索引。
+**RollUp 表索引**: shortkey index 可加速数据查找，但 shortkey index 依赖维度列排列次序。如果使用非前缀的维度列构造查找谓词，用户可以为数据表创建若干 RollUp 表索引。 RollUp 表索引的数据组织和存储和数据表相同，但 RollUp 表拥有自身的 shortkey index。用户创建 RollUp 表索引时，可选择聚合的粒度，列的数量，维度列的次序。使频繁使用的查询条件能够命中相应的 RollUp 表索引。
 
 语法：
 
@@ -175,10 +175,11 @@ ALTER TABLE [database.]table
 ADD ROLLUP r1(col1,col2) from r0, r2(col3,col4) from r0;
 ```
 
-注意：
-    1. 如果没有指定 from_index_name，则默认从 base index 创建。
-    2. rollup 表中的列必须是 from_index 中已有的列。
-    3. 在 properties 中，可以指定存储格式。具体请参阅 [CREATE TABLE](../data-definition/CREATE%20TABLE.md) 章节。
+> 注意
+>
+1. 如果没有指定 from_index_name，则默认从 base index 创建。
+2. rollup 表中的列必须是 from_index 中已有的列。
+3. 在 properties 中，可以指定存储格式。具体请参阅 [CREATE TABLE](../data-definition/CREATE%20TABLE.md) 章节。
 
 #### 删除 rollup index
 
@@ -212,7 +213,7 @@ ALTER TABLE [database.]table DROP ROLLUP r1, r2;
 
 注意：
 
-1. 不能删除 base index
+不能删除 base index。
 
 ### **schema change**
 
@@ -234,7 +235,7 @@ ADD COLUMN column_name column_type [KEY | agg_type] [DEFAULT "default_value"]
 
 ```plain text
 1. 聚合模型如果增加 value 列，需要指定 agg_type。
-2. 非聚合模型（如 DUPLICATE KEY）如果增加key列，需要指定KEY关键字。
+2. 非聚合模型（如 DUPLICATE KEY）如果增加 key 列，需要指定 KEY 关键字。
 3. 不能在 rollup index 中增加 base index 中已经存在的列，如有需要，可以重新创建一个 rollup index。
 ```
 
@@ -267,8 +268,8 @@ DROP COLUMN column_name
 
 注意：
 
-1. 不能删除分区列
-2. 如果是从 base index 中删除列，则如果 rollup index 中包含该列，也会被删除
+1. 不能删除分区列。
+2. 如果是从 base index 中删除列，则如果 rollup index 中包含该列，也会被删除。
 
 #### 修改指定 index 的列类型以及列位置
 
@@ -294,11 +295,11 @@ MODIFY COLUMN column_name column_type [KEY | agg_type] [NULL | NOT NULL] [DEFAUL
     * TINTINT/SMALLINT/INT/BIGINT/LARGEINT/FLOAT/DOUBLE/DECIMAL 转换成 VARCHAR。
     * VARCHAR 支持修改最大长度。
     * VARCHAR 转换成 TINTINT/SMALLINT/INT/BIGINT/LARGEINT/FLOAT/DOUBLE。
-    * VARCHAR 转换成 DATE (目前支持 "%Y-%m-%d", "%y-%m-%d", "%Y%m%d", "%y%m%d", "%Y/%m/%d, "%y/%m/%d " 六种格式化格式)
-    DATETIME 转换成 DATE(仅保留年-月-日信息, 例如: `2019-12-09 21:47:05` <--> `2019-12-09`)
+    * VARCHAR 转换成 DATE (目前支持 "%Y-%m-%d"，"%y-%m-%d"， "%Y%m%d"，"%y%m%d"，"%Y/%m/%d，"%y/%m/%d " 六种格式化格式)
+    DATETIME 转换成 DATE(仅保留年-月-日信息，例如: `2019-12-09 21:47:05` <--> `2019-12-09`)
     DATE 转换成 DATETIME(时分秒自动补零，例如: `2019-12-09` <--> `2019-12-09 00:00:00`)
     * FLOAT 转换成 DOUBLE。
-    * INT 转换成 DATE (如果 INT 类型数据不合法则转换失败，原始数据不变)
+    * INT 转换成 DATE (如果 INT 类型数据不合法则转换失败，原始数据不变。)
 
 6. 不支持从 NULL 转为 NOT NULL。
 
@@ -315,8 +316,8 @@ ORDER BY (column_name1, column_name2, ...)
 
 注意：
 
-1. index 中的所有列都要写出来
-2. value 列在 key 列之后
+1. index 中的所有列都要写出来。
+2. value 列在 key 列之后。
 
 #### 修改 table 的属性
 
@@ -373,8 +374,8 @@ ADD INDEX index_name (column [, ...],) [USING BITMAP] [COMMENT 'balabala'];
 注意：
 
 ```plain text
-1. 目前仅支持bitmap 索引
-2. BITMAP 索引仅在单列上创建
+1. 目前仅支持bitmap 索引。
+2. BITMAP 索引仅在单列上创建。
 ```
 
 #### 删除索引
@@ -399,14 +400,14 @@ SWAP WITH table_name;
 
 ### table
 
-1. 修改表的默认副本数量, 新建分区副本数量默认使用此值
+1. 修改表的默认副本数量，新建分区副本数量默认使用此值。
 
     ```sql
     ALTER TABLE example_db.my_table
     SET ("default.replication_num" = "2");
     ```
 
-2. 修改单分区表的实际副本数量(只限单分区表)
+2. 修改单分区表的实际副本数量(只限单分区表)。
 
     ```sql
     ALTER TABLE example_db.my_table
@@ -415,14 +416,14 @@ SWAP WITH table_name;
 
 ### partition
 
-1. 增加分区, 现有分区 [MIN, 2013-01-01)，增加分区 [2013-01-01, 2014-01-01)，使用默认分桶方式
+1. 增加分区，现有分区 [MIN, 2013-01-01)，增加分区 [2013-01-01, 2014-01-01)，使用默认分桶方式。
 
     ```sql
     ALTER TABLE example_db.my_table
     ADD PARTITION p1 VALUES LESS THAN ("2014-01-01");
     ```
 
-2. 增加分区，使用新的分桶数
+2. 增加分区，使用新的分桶数。
 
     ```sql
     ALTER TABLE example_db.my_table
@@ -430,7 +431,7 @@ SWAP WITH table_name;
     DISTRIBUTED BY HASH(k1) BUCKETS 20;
     ```
 
-3. 增加分区，使用新的副本数
+3. 增加分区，使用新的副本数。
 
     ```sql
     ALTER TABLE example_db.my_table
@@ -438,35 +439,35 @@ SWAP WITH table_name;
     ("replication_num"="1");
     ```
 
-4. 修改分区副本数
+4. 修改分区副本数。
 
     ```sql
     ALTER TABLE example_db.my_table
     MODIFY PARTITION p1 SET("replication_num"="1");
     ```
 
-5. 批量修改指定分区
+5. 批量修改指定分区。
 
     ```sql
     ALTER TABLE example_db.my_table
     MODIFY PARTITION (p1, p2, p4) SET("in_memory"="true");
     ```
 
-6. 批量修改所有分区
+6. 批量修改所有分区。
 
     ```sql
     ALTER TABLE example_db.my_table
     MODIFY PARTITION (*) SET("storage_medium"="HDD");
     ```
 
-7. 删除分区
+7. 删除分区。
 
     ```sql
     ALTER TABLE example_db.my_table
     DROP PARTITION p1;
     ```
 
-8. 增加一个指定上下界的分区
+8. 增加一个指定上下界的分区。
 
     ```sql
     ALTER TABLE example_db.my_table
@@ -483,7 +484,7 @@ SWAP WITH table_name;
     PROPERTIES("storage_type"="column");
     ```
 
-2. 创建 index: example_rollup_index2，基于 example_rollup_index（k1, k3, v1, v2）
+2. 创建 index: example_rollup_index2，基于 example_rollup_index（k1, k3, v1, v2）。
 
     ```sql
     ALTER TABLE example_db.my_table
@@ -491,7 +492,7 @@ SWAP WITH table_name;
     FROM example_rollup_index;
     ```
 
-3. 创建 index: example_rollup_index3, 基于 base index (k1, k2, k3, v1), 自定义 rollup 超时时间一小时。
+3. 创建 index: example_rollup_index3，基于 base index (k1, k2, k3, v1), 自定义 rollup 超时时间一小时。
 
     ```sql
     ALTER TABLE example_db.my_table
@@ -499,7 +500,7 @@ SWAP WITH table_name;
     PROPERTIES("storage_type"="column", "timeout" = "3600");
     ```
 
-4. 删除 index: example_rollup_index2
+4. 删除 index: example_rollup_index2。
 
     ```sql
     ALTER TABLE example_db.my_table
@@ -508,7 +509,7 @@ SWAP WITH table_name;
 
 ### SchemaChange
 
-1. 向 example_rollup_index 的 col1 后添加一个 key 列 new_col(非聚合模型)
+1. 向 example_rollup_index 的 col1 后添加一个 key 列 new_col(非聚合模型)。
 
     ```sql
     ALTER TABLE example_db.my_table
@@ -516,7 +517,7 @@ SWAP WITH table_name;
     TO example_rollup_index;
     ```
 
-2. 向 example_rollup_index 的 col1 后添加一个 value 列 new_col(非聚合模型)
+2. 向 example_rollup_index 的 col1 后添加一个 value 列 new_col(非聚合模型)。
 
     ```sql
     ALTER TABLE example_db.my_table
@@ -524,7 +525,7 @@ SWAP WITH table_name;
     TO example_rollup_index;
     ```
 
-3. 向 example_rollup_index 的 col1 后添加一个 key 列 new_col(聚合模型)
+3. 向 example_rollup_index 的 col1 后添加一个 key 列 new_col(聚合模型)。
 
     ```sql
     ALTER TABLE example_db.my_table
@@ -532,7 +533,7 @@ SWAP WITH table_name;
     TO example_rollup_index;
     ```
 
-4. 向 example_rollup_index 的 col1 后添加一个 value 列 new_col SUM 聚合类型(聚合模型)
+4. 向 example_rollup_index 的 col1 后添加一个 value 列 new_col SUM 聚合类型(聚合模型)。
 
     ```sql
     ALTER TABLE example_db.my_table
@@ -540,7 +541,7 @@ SWAP WITH table_name;
     TO example_rollup_index;
     ```
 
-5. 向 example_rollup_index 添加多列(聚合模型)
+5. 向 example_rollup_index 添加多列(聚合模型)。
 
     ```sql
     ALTER TABLE example_db.my_table
@@ -548,7 +549,7 @@ SWAP WITH table_name;
     TO example_rollup_index;
     ```
 
-6. 从 example_rollup_index 删除一列
+6. 从 example_rollup_index 删除一列。
 
     ```sql
     ALTER TABLE example_db.my_table
@@ -556,21 +557,21 @@ SWAP WITH table_name;
     FROM example_rollup_index;
     ```
 
-7. 修改 base index 的 col1 列的类型为 BIGINT，并移动到 col2 列后面
+7. 修改 base index 的 col1 列的类型为 BIGINT，并移动到 col2 列后面。
 
     ```sql
     ALTER TABLE example_db.my_table
     MODIFY COLUMN col1 BIGINT DEFAULT "1" AFTER col2;
     ```
 
-8. 修改 base index 的 val1 列最大长度。原 val1 为 (val1 VARCHAR(32) REPLACE DEFAULT "abc")
+8. 修改 base index 的 val1 列最大长度。原 val1 为 (val1 VARCHAR(32) REPLACE DEFAULT "abc")。
 
     ```sql
     ALTER TABLE example_db.my_table
     MODIFY COLUMN val1 VARCHAR(64) REPLACE DEFAULT "abc";
     ```
 
-9. 重新排序 example_rollup_index 中的列（设原列顺序为：k1, k2, k3, v1, v2）
+9. 重新排序 example_rollup_index 中的列（设原列顺序为：k1, k2, k3, v1, v2）。
 
     ```sql
     ALTER TABLE example_db.my_table
@@ -578,7 +579,7 @@ SWAP WITH table_name;
     FROM example_rollup_index;
     ```
 
-10. 同时执行两种操作
+10. 同时执行两种操作。
 
     ```sql
     ALTER TABLE example_db.my_table
@@ -586,7 +587,7 @@ SWAP WITH table_name;
     ORDER BY (k3,k1,k2,v2,v1) FROM example_rollup_index;
     ```
 
-11. 修改表的 bloom filter 列
+11. 修改表的 bloom filter 列。
 
     ```sql
     ALTER TABLE example_db.my_table SET ("bloom_filter_columns"="k1,k2,k3");
@@ -600,31 +601,31 @@ SWAP WITH table_name;
     PROPERTIES ("bloom_filter_columns"="k1,k2,k3");
     ```
 
-12. 修改表的 Colocate 属性
+12. 修改表的 Colocate 属性。
 
     ```sql
     ALTER TABLE example_db.my_table set ("colocate_with" = "t1");
     ```
 
-13. 将表的分桶方式由 Random Distribution 改为 Hash Distribution
+13. 将表的分桶方式由 Random Distribution 改为 Hash Distribution。
 
     ```sql
     ALTER TABLE example_db.my_table set ("distribution_type" = "hash");
     ```
 
-14. 修改表的动态分区属性(支持未添加动态分区属性的表添加动态分区属性)
+14. 修改表的动态分区属性(支持未添加动态分区属性的表添加动态分区属性)。
 
     ```sql
     ALTER TABLE example_db.my_table set ("dynamic_partition.enable" = "false");
     ```
 
-    如果需要在未添加动态分区属性的表中添加动态分区属性，则需要指定所有的动态分区属性
+    如果需要在未添加动态分区属性的表中添加动态分区属性，则需要指定所有的动态分区属性。
 
     ```sql
     ALTER TABLE example_db.my_table set ("dynamic_partition.enable" = "true", "dynamic_partition.time_unit" = "DAY", "dynamic_partition.end" = "3", "dynamic_partition.prefix" = "p", "dynamic_partition.buckets" = "32");
     ```
 
-15. 修改表的 in_memory 属性
+15. 修改表的 in_memory 属性。
 
     ```sql
     ALTER TABLE example_db.my_table set ("in_memory" = "true");
@@ -632,19 +633,19 @@ SWAP WITH table_name;
 
 ### rename
 
-1. 将名为 table1 的表修改为 table2
+1. 将名为 table1 的表修改为 table2。
 
     ```sql
     ALTER TABLE table1 RENAME table2;
     ```
 
-2. 将表 example_table 中名为 rollup1 的 rollup index 修改为 rollup2
+2. 将表 example_table 中名为 rollup1 的 rollup index 修改为 rollup2。
 
     ```sql
     ALTER TABLE example_table RENAME ROLLUP rollup1 rollup2;
     ```
 
-3. 将表 example_table 中名为 p1 的 partition 修改为 p2
+3. 将表 example_table 中名为 p1 的 partition 修改为 p2。
 
     ```sql
     ALTER TABLE example_table RENAME PARTITION p1 p2;
@@ -652,13 +653,13 @@ SWAP WITH table_name;
 
 ### index
 
-1. 在 table1 上为 siteid 创建 bitmap 索引
+1. 在 table1 上为 siteid 创建 bitmap 索引。
 
     ```sql
     ALTER TABLE table1 ADD INDEX index_name (siteid) [USING BITMAP] COMMENT 'balabala';
     ```
 
-2. 删除 table1 上的 siteid 列的 bitmap 索引
+2. 删除 table1 上的 siteid 列的 bitmap 索引。
 
     ```sql
     ALTER TABLE table1 DROP INDEX index_name;
@@ -666,8 +667,8 @@ SWAP WITH table_name;
 
 ### swap
 
-1. 将 table1 与 table2 原子替换
+将 table1 与 table2 原子替换。
 
-    ```sql
-    ALTER TABLE table1 SWAP WITH table2;
-    ```
+```sql
+ALTER TABLE table1 SWAP WITH table2;
+```

@@ -2,7 +2,7 @@
 
 ## 功能
 
-该语句用于创建 table。
+该语句用于创建表。
 
 ## 语法
 
@@ -22,6 +22,8 @@ CREATE [EXTERNAL] TABLE [IF NOT EXISTS] [database.]table_name
 
 ## 参数说明
 
+在指定数据库名、表名和列名等变量时，如果使用了保留关键字，必须使用反引号 (`) 包裹，否则可能会产生报错。有关 StarRocks 的保留关键字列表，请参见[关键字](../keywords.md#保留关键字)。
+
 ### **column_definition**
 
 语法：
@@ -39,53 +41,58 @@ col_name col_type [agg_type] [NULL | NOT NULL] [DEFAULT "default_value"]
 具体的列类型以及范围等信息如下：
 
 * TINYINT（1字节）
-范围：-2^7 + 1 ~ 2^7 - 1
+  范围：-2^7 + 1 ~ 2^7 - 1
 
 * SMALLINT（2字节）
-范围：-2^15 + 1 ~ 2^15 - 1
+  范围：-2^15 + 1 ~ 2^15 - 1
 
 * INT（4字节）
-范围：-2^31 + 1 ~ 2^31 - 1
+  范围：-2^31 + 1 ~ 2^31 - 1
 
 * BIGINT（8字节）
-范围：-2^63 + 1 ~ 2^63 - 1
+  范围：-2^63 + 1 ~ 2^63 - 1
 
 * LARGEINT（16字节）
-范围：-2^127 + 1 ~ 2^127 - 1
+  范围：-2^127 + 1 ~ 2^127 - 1
 
 * FLOAT（4字节）
-支持科学计数法
+  支持科学计数法
 
 * DOUBLE（8字节）
-支持科学计数法
+  支持科学计数法
 
 * DECIMAL[(precision, scale)] (16字节)
-保证精度的小数类型。默认是 DECIMAL(10, 0)
+  保证精度的小数类型。默认是 DECIMAL(10, 0)
     precision: 1 ~ 38
     scale: 0 ~ precision
-其中整数部分为：precision - scale
-不支持科学计数法
+  其中整数部分为：precision - scale
+  不支持科学计数法
 
 * DATE（3字节）
-范围：0000-01-01 ~ 9999-12-31
+  范围：0000-01-01 ~ 9999-12-31
 
 * DATETIME（8字节）
-范围：0000-01-01 00:00:00 ~ 9999-12-31 23:59:59
+  范围：0000-01-01 00:00:00 ~ 9999-12-31 23:59:59
 
 * CHAR[(length)]
-定长字符串。长度范围：1 ~ 255。默认为1
+
+  定长字符串。长度范围：1 ~ 255。默认为 1。
 
 * VARCHAR[(length)]
-变长字符串。长度范围：1 ~ 65533
+
+  变长字符串。单位：字节，默认取值为 `1`。
+  * 对于 StarRocks 2.1 之前的版本，`length` 的取值范围为 1~65533。
+  * 【公测中】自 StarRocks 2.1 版本开始，`length` 的取值范围为 1~1048576。
 
 * HLL (1~16385个字节)
-hll列类型，不需要指定长度和默认值，长度根据数据的聚合程度系统内控制，并且HLL列只能通过配套的hll_union_agg、Hll_cardinality、hll_hash进行查询或使用
+
+  hll 列类型，不需要指定长度和默认值，长度根据数据的聚合程度系统内控制，并且 HLL 列只能通过配套的 [hll_union_agg](../../sql-functions/aggregate-functions/hll_union_agg.md)、[Hll_cardinality](../../sql-functions/scalar-functions/hll_cardinality.md)、[hll_hash](../../sql-functions/aggregate-functions/hll_hash.md)进行查询或使用。
 
 * BITMAP
-bitmap列类型，不需要指定长度和默认值。表示整型的集合，元素最大支持到2^64 - 1
+  bitmap列类型，不需要指定长度和默认值。表示整型的集合，元素最大支持到2^64 - 1。
 
 * ARRAY
-支持在一个数组中嵌套子数组，最多可嵌套 14 层。您必须使用尖括号（ < 和 > ）来声明 ARRAY 类型，如 ARRAY < INT >。目前不支持将数组中的元素声明为 [Fast Decimal](../data-types/DECIMAL.md) 类型。
+  支持在一个数组中嵌套子数组，最多可嵌套 14 层。您必须使用尖括号（ < 和 > ）来声明 ARRAY 类型，如 ARRAY < INT >。目前不支持将数组中的元素声明为 [Fast Decimal](../data-types/DECIMAL.md) 类型。
 
 **agg_type**：聚合类型，如果不指定，则该列为 key 列。否则，该列为 value 列。
 
@@ -94,11 +101,11 @@ bitmap列类型，不需要指定长度和默认值。表示整型的集合，�
 
 * SUM、MAX、MIN、REPLACE
 
-* HLL_UNION(仅用于HLL列，为HLL独有的聚合方式)。
+* HLL_UNION（仅用 HLL列，为 HLL 独有的聚合方式)。
 
-* BITMAP_UNION(仅用于 BITMAP 列，为 BITMAP 独有的聚合方式)。
+* BITMAP_UNION（仅用于 BITMAP 列，为 BITMAP 独有的聚合方式)。
 
-* REPLACE_IF_NOT_NULL：这个聚合类型的含义是当且仅当新导入数据是非NULL值时会发生替换行为，如果新导入的数据是NULL，那么StarRocks仍然会保留原值。
+* REPLACE_IF_NOT_NULL：这个聚合类型的含义是当且仅当新导入数据是非 NULL 值时会发生替换行为，如果新导入的数据是NULL，那么 StarRocks 仍然会保留原值。
 ```
 
 注意：
@@ -107,28 +114,21 @@ bitmap列类型，不需要指定长度和默认值。表示整型的集合，�
 2. 如果用在建表时 `REPLACE_IF_NOT_NULL` 列指定了 NOT NULL，那么 StarRocks 仍然会将其转化 NULL，不会向用户报错。用户可以借助这个类型完成「部分列导入」的功能。
 该类型只对聚合模型有用(`key_desc` 的 `type` 为 `AGGREGATE KEY`)。
 
-**NULL | NOT NULL**：是否允许为 NULL: 默认为 NULL, PRIMARY KEY的key列默认为NOT NULL, NULL 值在导入数据中用 \N 来表示。
+**NULL | NOT NULL**：是否允许为 NULL。默认为 NULL，PRIMARY KEY 的 key 列默认为 NOT NULL。NULL 值在导入数据中用 \N 来表示。
 
 ### **index_definition**
 
 语法：
 
 ```sql
-INDEX index_name (col_name[, col_name, ...]) [USING BITMAP] COMMENT 'xxxxxx'
+INDEX index_name (col_name[, col_name, ...]) [USING BITMAP] [COMMENT '']
 ```
 
-说明：
-
-**index_name**：索引名称
-
-**col_name**：列名
-
-注意：
-当前仅支持 BITMAP 索引， BITMAP 索引仅支持应用于单列。
+建表时仅支持创建 bitmap 索引，语法如下。有关参数说明和使用限制，请参见 [Bitmap 索引](/using_starrocks/Bitmap_index.md#创建索引)。
 
 ### **ENGINE 类型**
 
-默认为 olap。可选 mysql, elasticsearch, hive。
+默认为 olap。可选 mysql，elasticsearch，hive。
 
 1. 如果是 mysql，则需要在 properties 提供以下信息：
 
@@ -162,7 +162,7 @@ INDEX index_name (col_name[, col_name, ...]) [USING BITMAP] COMMENT 'xxxxxx'
     )
     ```
 
-    其中 host 为 ES 集群连接地址，可指定一个或者多个, user/password 为开启 basic 认证的 ES 集群的用户名/密码，index 是 StarRocks 中的表对应的 ES 的 index 名字，可以是 alias，type 指定 index 的 type，默认是 doc。
+    其中 host 为 ES 集群连接地址，可指定一个或者多个，user/password 为开启 basic 认证的 ES 集群的用户名/密码，index 是 StarRocks 中的表对应的 ES 的 index 名字，可以是 alias，type 指定 index 的 type，默认是 doc。
 
 3. 如果是 hive，则需要在 properties 提供以下信息：
 
@@ -226,11 +226,47 @@ PARTITION BY RANGE (k1, k2, ...)
 3. 分区为左闭右开区间，首个分区的左边界为最小值。
 4. NULL 值只会存放在包含 **最小值** 的分区中。当包含最小值的分区被删除后，NULL 值将无法导入。
 5. 可以指定一列或多列作为分区列。如果分区值缺省，则会默认填充最小值。
+6. 当分区列为单列时，才支持使用 MAXVALUE。
 
 注意：
 
 1. 分区一般用于时间维度的数据管理。
 2. 有数据回溯需求的，可以考虑首个分区为空分区，以便后续增加分区。
+
+示例：
+
+1. 数据类型为 DATE 的列 `pay_dt` 为分区列，并且按天分区。
+
+    ```sql
+    PARTITION BY RANGE(pay_dt)
+    (
+        PARTITION p1 VALUES LESS THAN ("2021-01-02"),
+        PARTITION p2 VALUES LESS THAN ("2021-01-03"),
+        PARTITION p3 VALUES LESS THAN ("2021-01-04")
+    )
+    ```
+
+2. 数据类型为 INT 的列 `pay_dt` 为分区列，并且按天分区。
+
+    ```sql
+    PARTITION BY RANGE(pay_dt)
+    (
+        PARTITION p1 VALUES LESS THAN ("20210102"),
+        PARTITION p2 VALUES LESS THAN ("20210103"),
+        PARTITION p3 VALUES LESS THAN ("20210104")
+    )
+    ```
+
+3. 数据类型为 INT 的列 `pay_dt` 为分区列，并且按天分区，最后一个分区没有上界。
+
+    ```sql
+    PARTITION BY RANGE(pay_dt)
+    (
+        PARTITION p1 VALUES LESS THAN ("20210102"),
+        PARTITION p2 VALUES LESS THAN ("20210103"),
+        PARTITION p3 VALUES LESS THAN MAXVALUE
+    )
+    ```
 
 **Fixed Range**
 
@@ -240,23 +276,57 @@ PARTITION BY RANGE (k1, k2, ...)
 PARTITION BY RANGE (k1, k2, k3, ...)
 (
     PARTITION partition_name1 VALUES [("k1-lower1", "k2-lower1", "k3-lower1",...), ("k1-upper1", "k2-upper1", "k3-upper1", ...)),
-    PARTITION partition_name2 VALUES [("k1-lower1-2", "k2-lower1-2", ...), ("k1-upper1-2", MAXVALUE, )),
-    "k3-upper1-2", ...
+    PARTITION partition_name2 VALUES [("k1-lower1-2", "k2-lower1-2", ...), ("k1-upper1-2", "k2-upper1-2", "k3-upper1-2", ...))
+    ...
 )
 ```
 
 说明：
 
 1. Fixed Range 比 LESS THAN 相对灵活些，左右区间完全由用户自己确定。
-
 2. 其他与 LESS THAN 保持同步。
+3. 当分区列为单列时，才支持使用 MAXVALUE。
+
+示例：
+
+1. 数据类型为 DATE 的列 `pay_dt` 为分区列，并且按月分区。
+
+    ```sql
+    PARTITION BY RANGE (pay_dt)
+    (
+        PARTITION p20210101 VALUES [("2021-01-01"), ("2021-02-01")),
+        PARTITION p20210102 VALUES [("2021-02-01"), ("2021-03-01")),
+        PARTITION p20210103 VALUES [("2021-03-01"), ("2021-04-01"))
+    )
+    ```
+
+2. 数据类型为 INT 的列 `pay_dt` 为分区列，并且按月分区。
+
+    ```sql
+    PARTITION BY RANGE (pay_dt)
+    (
+        PARTITION p20210101 VALUES [("20210101"), ("20210201")),
+        PARTITION p20210102 VALUES [("20210201"), ("20210301")),
+        PARTITION p20210103 VALUES [("20210301"), ("20210401"))
+    )
+    ```
+
+3. 数据类型为 INT 的列 `pay_dt` 为分区列，并且按月分区，最后一个分区没有上界。
+
+    ```sql
+    PARTITION BY RANGE (pay_dt)
+    (
+        PARTITION p20210101 VALUES [("20210101"), ("20210201")),
+        PARTITION p20210102 VALUES [("20210201"), ("20210301")),
+        PARTITION p20210103 VALUES [("20210301"), (MAXVALUE))
+    )
 
 **批量创建分区**
 
 语法：
 
 ```sql
-PARTITION BY RANGE (datekey) (
+PARTITION BY RANGE (pay_dt) (
     START ("2021-01-01") END ("2021-01-04") EVERY (INTERVAL 1 day)
 )
 ```
@@ -264,10 +334,29 @@ PARTITION BY RANGE (datekey) (
 说明：
 用户可以通过给出一个 START 值、一个 END 值以及一个定义分区增量值的 EVERY 子句批量产生分区。
 
-1. 当前分区键仅支持 **日期类型** 和 **整数类型**，分区类型需要与 EVERY 里的表达式匹配。
-2. 当分区键为日期类型的时候需要指定 `INTERVAL` 关键字来表示日期间隔，目前日期仅支持 `day、week、month、year`，分区的命名规则同动态分区一样。
+1. 当前分区列仅支持 **日期类型** 和 **整数类型**，分区类型需要与 EVERY 里的表达式匹配。
+2. 当分区列为日期类型的时候需要指定 `INTERVAL` 关键字来表示日期间隔，目前日期仅支持 `day、week、month、year`，分区的命名规则同动态分区一样。
+3. 当分区列的数据类型为 INT 时，START 值、END 值仍需要用双引号包裹。
+4. 仅支持指定一列作为分区列。
+5. 更详细的语法规则，请参见[批量创建分区](/table_design/Data_distribution.md#批量创建分区)。
 
-更详细的语法规则，请参见[批量创建分区](/table_design/Data_distribution.md#批量创建分区)。
+示例：
+
+1. 数据类型为 DATE 的列 `pay_dt` 为分区列，并且按年分区。
+
+    ```sql
+    PARTITION BY RANGE (pay_dt) (
+        START ("2018-01-01") END ("2023-01-01") EVERY (INTERVAL 1 YEAR)
+    )
+    ```
+
+2. 数据类型为 INT 的列 `pay_dt` 为分区列，并且按年分区。
+
+    ```sql
+    PARTITION BY RANGE (pay_dt) (
+        START ("2018") END ("2023") EVERY (1)
+    )
+    ```
 
 ### **distribution_desc**
 
@@ -300,8 +389,6 @@ PROPERTIES (
 ```
 
 **storage_medium**：用于指定该分区的初始存储介质，可选择 SSD 或 HDD。
-
-* 默认初始存储介质可通过 fe 的配置文件 `fe.conf` 中指定 `default_storage_medium=xxx`，如果没有指定，则默认为 HDD。
 
 > 注意：当 FE 配置项 `enable_strict_storage_medium_check` 为 `true` 时，若集群中没有设置对应的存储介质时，建表语句会报错 `Failed to find enough hosts with storage medium [SSD|HDD] at all backends...`。设置 `enable_strict_storage_medium_check` 为 `false` 可以忽略该报错强行建表，但是后续可能会导致集群磁盘空间分布出现不均衡，所以强烈建议在建表时指定和集群存储介质相匹配的 `storage_medium` 属性。
 
@@ -617,7 +704,7 @@ PROPERTIES ("storage_type" = "column");
 
  创建动态分区表需要在 FE 配置中开启 **动态分区** 功能。
 
- 该表每天提前创建 3 天的分区，并删除 3 天前的分区。例如今天为 `2020-01-08`，则会创建分区名为 `p20200108`, `p20200109`, `p20200110`, `p20200111` 的分区. 分区范围分别为:
+ 该表每天提前创建 3 天的分区，并删除 3 天前的分区。例如今天为 `2020-01-08`，则会创建分区名为 `p20200108`，`p20200109`，`p20200110`，`p20200111` 的分区. 分区范围分别为:
 
 ``` plain text
 [types: [DATE]; keys: [2020-01-08]; ‥types: [DATE]; keys: [2020-01-09]; )
