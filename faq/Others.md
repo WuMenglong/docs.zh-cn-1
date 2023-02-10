@@ -57,7 +57,7 @@ ALTER DATABASE example_db SET DATA QUOTA 10T;
 
 ## StarRocks 支持通过 UPSERT 语法实现部分字段更新吗？
 
-StarRocks 2.2 及以上版本可以通过主键 (Primary Key) 模型实现部分字段更新。StarRocks 1.9 及以上版本可以通过主键 (Primary Key) 模型实现全部字段更新。更多信息，参见 StarRocks 2.2 版本的[主键模型](https://docs.starrocks.com/zh-cn/2.2/table_design/Data_model#%E4%B8%BB%E9%94%AE%E6%A8%A1%E5%9E%8B)。
+StarRocks 2.2 及以上版本可以通过主键 (Primary Key) 模型实现部分字段更新。StarRocks 1.9 及以上版本可以通过主键 (Primary Key) 模型实现全部字段更新。更多信息，参见 StarRocks 2.2 版本的[主键模型](../table_design/Data_model.md#主键模型)。
 
 ## 如何使用原子替换表和原子替换分区功能？
 
@@ -148,7 +148,7 @@ ERROR 1064 (HY000): HdfsOrcScanner::do_open failed. reason = Invalid ORC postscr
 解决方案有以下两种：
 
 - 将 StarRocks 升级到 2.2 或更高版本。
-- 手动刷新 Apache Hive™ 表。更多信息，参见[更新缓存](../using_starrocks/External_table#%E7%BC%93%E5%AD%98%E6%9B%B4%E6%96%B0)。
+- 手动刷新 Apache Hive™ 表。更多信息，参见[缓存更新](../data_source/External_table.md#手动更新元数据缓存)。
 
 ## 连接 MySQL 外表报错 "caching_sha2_password cannot be loaded"
 
@@ -180,15 +180,15 @@ MySQL 5.7 版本默认的认证方式为 mysql_native_password，如使用 MySQL
 
 执行 DROP TABLE 语句删表后需等待磁盘空间释放。如果想要快速释放磁盘空间可以使用 DROP TABLE FORCE 语句。执行 DROP TABLE FORCE 语句删除表时不会检查该表是否存在未完成的事务，而是直接将表删除。建议谨慎使用 DROP TABLE FORCE 语句，因为使用该语句删除的表不能恢复。
 
-## 如何查看StarRocks的版本？
+## 如何查看 StarRocks 的版本？
 
-执行`select current_version();`命令或者CLI`sh bin/show_fe_version.sh`命令查看版本。
+执行 `select current_version();` 命令或者CLI `sh bin/show_fe_version.sh` 命令查看版本。
 
-## 如何设置FE的内存大小？
+## 如何设置 FE 的内存大小？
 
 元数据信息都保存在 FE 的内存中。可以参考 Tablet 的数量来设置 FE 的内存大小。一千万个 Tablet 内存使用在 20 GB左右。FE 的内存最多可设置为 20 GB。
 
-## StarRocks如何计算查询时间?
+## StarRocks 如何计算查询时间?
 
 StarRocks 是多线程计算，查询时间即为查询最慢的线程所用的时间。
 
@@ -236,3 +236,11 @@ SQL 错误 [1064] [42000]: Table[external_t] is not a OLAP/ELASTICSEARCH/HIVE ta
 **解决方法**：
 
 原来是建外部表时端口不对，正确的端口是"port"="9020"，不是9931.
+
+## 磁盘存储空间不足时，如何释放可用空间？
+
+您可以通过 `rm -rf` 命令直接删除 `trash` 目录下的内容。在完成恢复数据备份后，您也可以通过删除 `snapshot` 目录下的内容释放存储空间。
+
+## 磁盘存储空间不足，如何扩展磁盘空间？
+
+如果 BE 节点存储空间不足，您可以在 BE 配置项 `storage_root_path` 所对应目录下直接添加磁盘。

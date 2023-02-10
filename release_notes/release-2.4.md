@@ -1,5 +1,106 @@
 # StarRocks version 2.4
 
+## 2.4.3
+
+发布日期：2023 年 1 月 19 日
+
+### 功能优化
+
+- 在 Analyze 时，StarRocks 提前检查 Database 和 Table 是否存在以避免 NPE。[#14467](https://github.com/StarRocks/starrocks/pull/14467)
+- 在查询外表时，如果列的数据类型不支持，将不物化该列。[#13305](https://github.com/StarRocks/starrocks/pull/13305)
+- 为 FE 启动脚本 **start_fe.sh** 添加 Java 版本检查。[#14333](https://github.com/StarRocks/starrocks/pull/14333)
+
+### 问题修复
+
+修复了如下问题：
+
+- 未设置 Timeout 导致 Stream Load 失败。[#16241](https://github.com/StarRocks/starrocks/pull/16241)
+- BRPC Send 在内存使用多的时候会崩溃。[#16046](https://github.com/StarRocks/starrocks/issues/16046)
+- 无法通过低版本 StarRocks 外表的方式导入数据。[#16130](https://github.com/StarRocks/starrocks/pull/16130)
+- 物化视图刷新失败会导致内存泄漏。[#16041](https://github.com/StarRocks/starrocks/pull/16041)
+- Schema Change 在 Publish 阶段卡住。[#14148](https://github.com/StarRocks/starrocks/issues/14148)
+- 物化视图 QeProcessorImpl 问题可能导致内存泄漏。[#15699](https://github.com/StarRocks/starrocks/pull/15699)
+- Limit 查询结果不一致。[#13574](https://github.com/StarRocks/starrocks/pull/13574)
+- INSERT 导入导致内存泄漏。[#14718](https://github.com/StarRocks/starrocks/pull/14718)
+- Primary Key 表执行 Tablet Migration。[#13720](https://github.com/StarRocks/starrocks/pull/13720)
+- 当 Broker Load 作业持续运行时 Broker Kerberos Ticket 会超时。[#16149](https://github.com/StarRocks/starrocks/pull/16149)
+- 基于表生成视图过程中，列的 `nullable` 信息转化错误。[#15744](https://github.com/StarRocks/starrocks/pull/15744)
+
+### 行为变更
+
+- 修改 Thrift Listen 的 Backlog 的默认值为 `1024`。 [#13911](https://github.com/StarRocks/starrocks/pull/13911)
+- 添加 `FORBID_INVALID_DATES` 的 SQL 模式，默认关闭。打开后会校验日期类型的输入，当日期为非法时间时会报错。[#14143](https://github.com/StarRocks/starrocks/pull/14143)
+
+## 2.4.2
+
+发布日期：2022 年 12 月 14 日
+
+### 功能优化
+
+- 优化了 Bucket Hint 在存在大量 Bucket 时候的性能。[#13142](https://github.com/StarRocks/starrocks/pull/13142)
+
+### 问题修复
+
+修复了如下问题：
+
+- 主键索引落盘可能导致 BE 崩溃。[#14857](https://github.com/StarRocks/starrocks/pull/14857) [#14819](https://github.com/StarRocks/starrocks/pull/14819)
+- 物化视图表类型不能被`SHOW FULL TABLES` 正确识别。[#13954](https://github.com/StarRocks/starrocks/pull/13954)
+- StarRocks 从 v2.2 升级到 v2.4 可能导致 BE 崩溃。[#13795](https://github.com/StarRocks/starrocks/pull/13795)
+- Broker Load 可能导致 BE 崩溃。[#13973](https://github.com/StarRocks/starrocks/pull/13973)
+- Session 变量 `statistic_collect_parallel` 不生效。[#14352](https://github.com/StarRocks/starrocks/pull/14352)
+- INSERT INTO 可能导致 BE 崩溃。[#14818](https://github.com/StarRocks/starrocks/pull/14818)
+- JAVA UDF 可能导致 BE 崩溃。[#13947](https://github.com/StarRocks/starrocks/pull/13947)
+- Partial Update 时副本 Clone 可能导致 BE 崩溃且无法重启。[#13683](https://github.com/StarRocks/starrocks/pull/13683)
+- Colocate Join 可能不生效。[#13561](https://github.com/StarRocks/starrocks/pull/13561)
+
+### 行为变更
+
+- Session 变量 `query_timeout` 添加最大值 `259200` 和最小值 `1` 的限制。
+
+## 2.4.1
+
+发布日期：2022 年 11 月 14 日
+
+### 新增特性
+
+- 新增非等值 LEFT SEMI/ANTI JOIN 支持，完善 JOIN 功能。[#13019](https://github.com/StarRocks/starrocks/pull/13019)
+
+### 功能优化
+
+- 在 `HeartbeatResponse` 添加 `aliveStatus` 属性，用以判断节点在线状态，优化节点在线判断逻辑。[#12713](https://github.com/StarRocks/starrocks/pull/12713)
+
+- 优化 Routine Load 的报错信息显示。[#12155](https://github.com/StarRocks/starrocks/pull/12155)
+
+### 问题修复
+
+- 因自 2.4.0 RC 升级至 2.4.0 导致 BE 崩溃。[#13128](https://github.com/StarRocks/starrocks/pull/13128)
+
+- 查询数据湖时，延迟物化会导致查询结果错误。[#13133](https://github.com/StarRocks/starrocks/pull/13133)
+
+- 函数 get_json_int 报错。[#12997](https://github.com/StarRocks/starrocks/pull/12997)
+
+- 索引落盘的主键表删除数据时，可能导致数据不一致。[#12719](https://github.com/StarRocks/starrocks/pull/12719)
+
+- 主键表 Compaction 可能会导致 BE 崩溃。[#12914](https://github.com/StarRocks/starrocks/pull/12914)
+
+- 函数 json_object 输入含有空字符串时，返回错误结果。[#13030](https://github.com/StarRocks/starrocks/issues/13030)
+
+- RuntimeFilter 会导致 BE 崩溃。[#12807](https://github.com/StarRocks/starrocks/pull/12807)
+
+- CBO 内过多递归计算导致 FE 挂起。[#12788](https://github.com/StarRocks/starrocks/pull/12788)
+
+- 优雅退出时 BE 可能会崩溃或报错。[#12852](https://github.com/StarRocks/starrocks/pull/12852)
+
+- 添加新列后，删除会造成 Compaction 崩溃的问题。[#12907](https://github.com/StarRocks/starrocks/pull/12907)
+
+- OLAP 外表元数据同步会导致数据不一致。[#12368](https://github.com/StarRocks/starrocks/pull/12368)
+
+- 其中一个 BE 崩溃后，相关查询小概率在其他 BE 一直运行直到超时。[#12954](https://github.com/StarRocks/starrocks/pull/12954)
+
+### 行为变更
+
+- Hive 外表解析出错时，StarRocks 会报错，不会将相关列设置为 NULL。 [#12382](https://github.com/StarRocks/starrocks/pull/12382)
+
 ## 2.4.0
 
 发布日期： 2022 年 10 月 20 日
@@ -44,7 +145,7 @@
 
 - 统计信息支持直方图，并进一步完善全量统计信息采集。相关文档，请参见[CBO统计信息](../using_starrocks/Cost_based_optimizer.md)。
 
-- 支持 Tablet 自适应多线程 Scan，降低 Scan 性能对同磁盘 Tablet 数量的依赖，从而可以简化分桶数量的设定。相关文档，请参见 [确定分桶数量](../table_design/Data_distribution.md#确定分桶数量)。
+- 支持 Tablet 自适应多线程 Scan，降低 Scan 性能对同磁盘 Tablet 数量的依赖，从而可以简化分桶数量的设定。相关文档，请参见[确定分桶数量](../table_design/Data_distribution.md#确定分桶数量)。
 
 - 支持查询 Apache  Hive 中的压缩文本（.txt）文件。
 

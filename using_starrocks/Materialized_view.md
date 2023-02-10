@@ -54,7 +54,7 @@ StarRocks 中的物化视图是一种特殊的物理表，其中保存着基于�
 
   假设您的基表中包含大量原始数据，查询需要进行复杂的 ETL 操作，您可以通过对数据建立多层物化视图实现数仓分层。如此可以将复杂查询分解为多层简单查询，既可以减少重复计算，又能够帮助维护人员快速定位问题。除此之外，数仓分层还可以将原始数据与统计数据解耦，从而保护敏感性原始数据。
 
-## 使用物化视图加速查询
+## 使用单表同步刷新物化视图加速查询
 
 如果您的数据仓库中存在大量复杂或重复的查询，您可以通过创建物化视图加速查询。
 
@@ -155,7 +155,7 @@ GROUP BY store_id;
 
 可以看到，此时查询时间为 0.02 秒，其 Query Profile 中的 `rollup` 项显示为 `sales_records`（即基表），说明该查询未使用物化视图。
 
-### 创建物化视图
+### 创建单表同步刷新物化视图
 
 您可以通过以下命令为特定查询语句创建物化视图。
 
@@ -175,7 +175,7 @@ FROM sales_records
 GROUP BY store_id;
 ```
 
-### 使用物化视图查询
+### 使用单表同步物化视图查询
 
 新建的物化视图将预计算并保存上述查询的结果，后续查询将直接调用该结果以加速查询。创建成功后，您可以再次运行同样的查询以测试查询时间。
 
@@ -255,9 +255,9 @@ MySQL > EXPLAIN SELECT store_id, SUM(sale_amt) FROM sales_records GROUP BY store
 
 可以看到，此时 Query Profile 中的 `rollup` 项显示为 `store_amt`（即物化视图），说明该查询已命中物化视图。
 
-### 查看物化视图构建状态
+### 查看单表同步物化视图构建状态
 
-创建物化视图是一个异步的操作。CREATE MATERIALIZED VIEW 命令执行成功即代表创建物化视图的任务提交成功。您可以通过 [SHOW ALTER](../sql-reference/sql-statements/data-manipulation/SHOW%20ALTER.md) 命令查看当前数据库中物化视图的构建状态。
+创建物化视图是一个异步的操作。CREATE MATERIALIZED VIEW 命令执行成功即代表创建物化视图的任务提交成功。您可以通过 [SHOW ALTER MATERIALIZED VIEW](../sql-reference/sql-statements/data-manipulation/SHOW%20ALTER%20MATERIALIZED%20VIEW.md) 命令查看当前数据库中物化视图的构建状态。
 
 ```Plain
 MySQL > SHOW ALTER MATERIALIZED VIEW\G
@@ -312,7 +312,7 @@ MySQL > DESC sales_records ALL;
 
 #### 删除正在创建的物化视图
 
-可以通过取消正在进行的物化视图创建任务删除正在创建的物化视图。首先需要通过 [查看物化视图构建状态](#查看物化视图构建状态) 获取该物化视图的任务 ID `JobID`。得到任务 ID 后，需要通过 CANCEL ALTER 命令取消该创建任务。
+可以通过取消正在进行的物化视图创建任务删除正在创建的物化视图。首先需要通过 [查看物化视图构建状态](#查看单表同步物化视图构建状态) 获取该物化视图的任务 ID `JobID`。得到任务 ID 后，需要通过 CANCEL ALTER 命令取消该创建任务。
 
 ```Plain
 CANCEL ALTER TABLE ROLLUP FROM sales_records (12090);
@@ -362,7 +362,7 @@ GROUP BY advertiser, channel;
 
 #### 近似去重
 
-以上文表 `advertiser_view_record` 为例，如果想在查询点击广告的 UV 时实现近似去重查询加速，可基于该明细表创建一张物化视图，并使用 hll_union() 函数预先聚合数据。
+以上文表 `advertiser_view_record` 为例，如果想在查询点击广告的 UV 时实现近似去重查询加速，可基于该明细表创建一张物化视图，并使用 [hll_union()](../sql-reference/sql-functions/aggregate-functions/hll_union.md) 函数预先聚合数据。
 
 ```SQL
 CREATE MATERIALIZED VIEW advertiser_uv2 AS
@@ -408,11 +408,9 @@ FROM tableA
 
 - 为一张表创建过多的物化视图会影响导入的效率。导入数据时，物化视图和基表数据将同步更新，如果一张基表包含 n 个物化视图，向基表导入数据时，其导入效率大约等同于导入 n 张表，数据导入的速度会变慢。
 
-## 使用物化视图进行数仓建模
+- 当前版本物化视图中使用聚合函数需要与 GROUP BY 语句一起使用，且 SELECT LIST 中至少包含一个分组列。
 
-> **注意**
->
-> StarRocks 2.4 之前版本不支持以下功能。
+## 使用多表异步刷新物化视图为数仓建模
 
 2.4 版本中，StarRocks 进一步支持异步多表物化视图，方便您通过创建物化视图的方式为数据仓库进行建模。异步物化视图支持所有[数据模型](../table_design/Data_model.md)。
 
@@ -426,7 +424,11 @@ FROM tableA
 
 #### 开启异步物化视图
 
-使用异步物化视图前，您需要在 FE 配置文件 **fe.conf** 中添加 FE 配置项 `enable_experimental_mv` 并设置为 `true`，然后重启集群使配置生效。
+使用异步物化视图前，您需要使用以下命令设置 FE 配置项 `enable_experimental_mv` 为 `true`：
+
+```SQL
+ADMIN SET FRONTEND CONFIG ("enable_experimental_mv"="true");
+```
 
 #### 创建基表
 
@@ -480,7 +482,7 @@ FROM order_list INNER JOIN goods ON goods.item_id1 = order_list.item_id2
 GROUP BY order_id;
 ```
 
-### 创建物化视图
+### 创建多表异步刷新物化视图
 
 您可以通过以下命令为特定查询语句创建物化视图。
 
@@ -597,7 +599,7 @@ REFRESH MATERIALIZED VIEW order_mv;
 >
 > 您可以对异步刷新和手动刷新方式的物化视图手动调用物化视图，但不能通过该命令手动刷新单表同步刷新方式的物化视图。
 
-您可以通过 [CANCEL REFRESH MATERIALIZED VIEW](../sql-reference/sql-statements/data-manipulation/CANCEL%20REFRESH%20MATERIALIZED%20VIEW.md) 命令手动刷新特定物化视图。
+您可以通过 [CANCEL REFRESH MATERIALIZED VIEW](../sql-reference/sql-statements/data-manipulation/CANCEL%20REFRESH%20MATERIALIZED%20VIEW.md) 命令取消异步或手动刷新物化视图的刷新任务。
 
 ### 查看多表物化视图的执行状态
 
@@ -627,5 +629,5 @@ DROP MATERIALIZED VIEW order_mv;
   - 您可以为异步刷新物化视图设定与基表不同的分区方式和分桶方式。
   - 异步刷新物化视图支持分区上卷。例如，基表基于天做分区方式，您可以设置物化视图按月做分区。
 - 在异步刷新和手动刷新方式下，您可以基于多张表构建物化视图。
-- 异步刷新和手动刷新的物化视图的分区列和分桶列必须在查询语句中；如果查询语句中有聚合函数，分区列和分桶列必须出现在 GROUP BY 语句中。
+- 异步刷新和手动刷新的物化视图的分区列和分桶列必须在查询语句中。
 - 查询语句不支持非确定性函数，其中包括 rand()、random()、uuid() 和 sleep()。

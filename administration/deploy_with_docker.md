@@ -7,7 +7,7 @@
 |分类|描述|
 |---------|--------|
 |硬件要求|<ul><li>CPU 需支持 AVX2 指令集</li><li>建议配置 8 核 或以上 CPU，16GB 或以上内存。</li></ul>|
-|操作系统|CentOS（7 或以上）|
+|操作系统|Linux kernel  3.10 以上。|
 |软件要求|<ul><li>Docker</li><li>MySQL 客户端（5.5 或以上）</li></ul>|
 
 ## 创建 Dockerfile
@@ -49,7 +49,7 @@ RUN chmod +x $StarRocks_home/run_script.sh
 CMD $StarRocks_home/run_script.sh
 ```
 
-> 注意：将以上 `<url_to_download_specific_ver_of_starrocks>` 替换为实际[下载地址](https://www.starrocks.com/zh-CN/download)
+> 注意：将以上 `<url_to_download_specific_ver_of_starrocks>` 替换为实际[下载地址](https://www.mirrorship.cn/zh-CN/download)。
 
 ## 创建脚本文件
 
@@ -84,7 +84,7 @@ while sleep 60; do
   ps aux | grep starrocks | grep -q -v grep
   PROCESS_STATUS=$?
 
-  if [ PROCESS_STATUS -ne 0 ]; then
+  if [ ${PROCESS_STATUS} -ne 0 ]; then
     echo "one of the starrocks process already exit."
     exit 1;
   fi
@@ -104,7 +104,11 @@ docker build --no-cache --progress=plain -t starrocks:1.0 .
 运行以下命令启动 Docker 容器。
 
 ```shell
+# 1、端口映射启动方式
 docker run -p 9030:9030 -p 8030:8030 -p 8040:8040 --privileged=true -itd --name starrocks-test starrocks:1.0
+
+# 2、同宿主机网络环境启动方式（避免使用stream load导入数据等找不到be节点ip地址）
+docker run  --network host  --privileged=true -itd --name starrocks-test starrocks:1.0
 ```
 
 ## 连接 StarRocks

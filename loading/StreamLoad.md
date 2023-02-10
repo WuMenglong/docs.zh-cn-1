@@ -37,27 +37,25 @@ Stream Load 当前不支持导入某一列为 JSON 的 CSV 文件的数据。
 
 ## 基本原理
 
-Stream Load 需要您在客户端上通过 HTTP 发送导入作业请求给 FE 节点，FE 节点会通过 HTTP 重定向 (Redirect) 指令将请求转发给某一个 BE 节点。
+您需要在客户端上通过 HTTP 发送导入作业请求给 FE，FE 会通过 HTTP 重定向 (Redirect) 指令将请求转发给某一个 BE。或者，您也可以直接发送导入作业请求给某一个 BE。
 
 > **说明**
 >
-> 您也可以直接发送导入作业请求给某一个 BE 节点。
+> 如果把导入作业请求发送给 FE，FE 会通过轮询机制选定由哪一个 BE 来接收请求，从而实现 StarRocks 集群内的负载均衡。因此，推荐您把导入作业请求发送给 FE。
 
-接收导入作业请求的 BE 节点作为 Coordinator BE 节点，将数据按表结构划分、并分发数据到相关的 BE 节点。导入作业的结果信息由 Coordinator BE 节点返回给客户端。
-
-> **说明**
->
-> 如果把导入作业请求发送给 FE 节点，FE 节点会通过轮询机制选定由哪一个 BE 节点来接收请求，从而实现 StarRocks 集群内的负载均衡。因此，推荐您把导入作业请求发送给 FE 节点，由 FE 节点来选定接收请求的 Coordinator BE 节点。
+接收导入作业请求的 BE 作为 Coordinator BE，将数据按表结构划分、并分发数据到其他各相关的 BE。导入作业的结果信息由 Coordinator BE 返回给客户端。需要注意的是，如果您在导入过程中停止 Coordinator BE，会导致导入作业失败。
 
 下图展示了 Stream Load 的主要流程：
 
-![Stream Load 原理图](../assets/4.2-1.png)
+![Stream Load 原理图](../assets/4.2-1-zh.png)
 
 ## 导入本地文件
 
 ### 创建导入作业
 
 本文以 curl 工具为例，介绍如何使用 Stream Load 从本地文件系统导入 CSV 或 JSON 格式的数据。有关创建导入作业的详细语法和参数说明，请参见 [STREAM LOAD](../sql-reference/sql-statements/data-manipulation/STREAM%20LOAD.md)。
+
+注意在 StarRocks 中，部分文字是 SQL 语言的保留关键字，不能直接用于 SQL 语句。如果想在 SQL 语句中使用这些保留关键字，必须用反引号 (`) 包含起来。参见[关键字](../sql-reference/sql-statements/keywords.md)。
 
 #### 导入 CSV 格式的数据
 

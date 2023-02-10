@@ -14,6 +14,10 @@ mysql -h <fe_host> -P9030 -u root
 
 使用 `root` 用户创建 `example_db` 数据库。
 
+> **注意**
+>
+> 在指定数据库名、表名和列名等变量时，如果使用了保留关键字，必须使用反引号 (`) 包裹，否则可能会产生报错。有关 StarRocks 的保留关键字列表，请参见[关键字](../keywords.md#保留关键字)。
+
 ```sql
 CREATE DATABASE example_db;
 ```
@@ -115,7 +119,7 @@ StarRocks 默认会给 Key 列创建稀疏索引加速查询，具体规则见 [
 
 #### ENGINE 类型
 
-默认 ENGINE 类型为 `OLAP`，对应 StarRocks 集群内部表。其他可选项包括 `mysql`，`elasticsearch`，`hive`，以及 `ICEBERG`，分别代表所创建的表为相应类型的 [外部表](/data_source/External_table.md)。
+默认 ENGINE 类型为 `olap`，对应 StarRocks 集群内部表。其他可选项包括 `mysql`，`elasticsearch`，`hive`，`jdbc`（2.3 及以后），`hudi`（2.2 及以后）以及 `iceberg`，分别代表所创建的表为相应类型的 [外部表](../data_source/External_table.md)。
 
 ## 查看表信息
 
@@ -157,7 +161,7 @@ SHOW CREATE TABLE detailDemo;
 
 StarRocks 支持多种 DDL 操作。
 
-您可以通过 [ALTER TABLE](/sql-reference/sql-statements/data-definition/ALTER%20TABLE.md) 命令可以修改表的 Schema，包括增加列，删除列，修改列类型（暂不支持修改列名称），改变列顺序。
+您可以通过 [ALTER TABLE](/sql-reference/sql-statements/data-definition/ALTER%20TABLE.md#schema-change) 命令可以修改表的 Schema，包括增加列，删除列，修改列类型（暂不支持修改列名称），改变列顺序。
 
 ### 增加列
 

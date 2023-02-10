@@ -17,7 +17,7 @@
 
 ## 创建临时分区
 
-您可以通过以下命令创建临时分区。
+您可以通过 ALTER TABLE 命令创建临时分区。
 
 ```sql
 ALTER TABLE table_name ADD TEMPORARY PARTITION partition_name;
@@ -56,7 +56,7 @@ DISTRIBUTED BY HASH(k1) BUCKETS 5;
 
 ### 通过 INSERT INTO 命令导入
 
-您可以通过以下 `INSERT INTO` 命令将数据导入临时分区
+您可以通过以下 `INSERT INTO` 命令将数据导入临时分区。
 
 ```sql
 INSERT INTO table_name TEMPORARY PARTITION(tp_name1, tp_name2, ...) SELECT (sql_statement);

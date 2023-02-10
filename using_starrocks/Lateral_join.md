@@ -2,7 +2,7 @@
 
 本文介绍如何使用 Lateral Join 功能。
 
-「行列转化」是 ETL 处理过程中常见的操作。Lateral Join 功能能够将每行数据和内部的子查询或者 Table Function 关联。通过 Lateral Join 与 Unnest 功能配合，您可以实现一行转多行的功能。Unnest 是一种 Table Function，可以把数组类型转化成 Table 的多行。
+「行列转化」是 ETL 处理过程中常见的操作。Lateral Join 功能能够将每行数据和内部的子查询或者 Table Function 关联。通过 Lateral Join 与 Unnest 功能配合，您可以实现一行转多行的功能。Unnest 是一种 Table Function，可以把数组类型转化成 Table 的多行。更多信息，参见 [unnest()](../sql-reference/sql-functions/array-functions/unnest.md)。
 
 > 注意
 >
@@ -11,11 +11,7 @@
 
 ## 开启 CBO 优化器
 
-使用 Lateral Join 功能前，您需要开启 CBO 优化器。
-
-~~~SQL
-SET global enable_cbo = true;
-~~~
+StarRocks 2.4 版本已集成并启用 CBO 优化器，您无需进行额外操作。
 
 ## 使用 Lateral Join
 
@@ -44,7 +40,7 @@ FROM tests, UNNEST(scores) AS t;
 
 当前版本 StarRocks 支持 Bitmap、String、Array、Column 之间的转化关系如下：
 
-![Lateral Join 中一些类型间的转化](../assets/lateral_join_type_convertion.png)
+![Lateral Join 中一些类型间的转化](../assets/lateral_join_type_conversion.png)
 
 ### 展开 STRING 类型数据
 

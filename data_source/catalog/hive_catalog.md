@@ -2,15 +2,12 @@
 
 本文介绍如何创建 Hive catalog，以及需要做哪些相应的配置。
 
-Hive catalog 是一个外部数据目录 (external catalog)。在 StarRocks 中，您可以通过该目录直接查询 Apache Hive™ 集群中的数据，无需数据导入或创建外部表。在查询数据时，StarRocks 会用到以下两个 Hive 组件：
-
-- **元数据服务**：Hive 元数据会存储在关系型数据库中（如 MySQL），并通过元数据服务将元数据暴露出来供 StarRocks 的 FE 进行查询规划。
-- **存储系统**：用于存储 Hive 数据。数据文件以不同的格式存储在分布式文件系统或对象存储系统中。当 FE 将生成的查询计划分发给各个 BE 后，各个 BE 会并行扫描 Hive 存储系统中的目标数据，并执行计算返回查询结果。
+Hive catalog 是一个外部数据目录 (external catalog)。StarRocks 2.3 及以上版本支持通过该目录直接查询 Apache Hive™ 集群中的数据，无需数据导入或创建外部表。
 
 ## 使用限制
 
 - StarRocks 支持查询如下格式的 Hive 数据：Parquet、ORC 和 CSV。
-- StarRocks 支持查询如下类型的 Hive 数据：TINYINT、SMALLINT、DATE、BOOLEAN、INT、BIGINT、TIMESTAMP、STRING、VARCHAR、CHAR、DOUBLE、FLOAT、DECIMAL 和 ARRAY。注意查询命中不支持的数据类型会报错，不支持的数据类型包括：INTERVAL、BINARY、MAP、 STRUCT 和 UNION。
+- StarRocks 支持查询如下类型的 Hive 数据：TINYINT、SMALLINT、DATE、BOOLEAN、INTEGER、BIGINT、TIMESTAMP、STRING、VARCHAR、CHAR、DOUBLE、FLOAT、DECIMAL 和 ARRAY。注意查询命中不支持的数据类型会报错，不支持的数据类型包括：INTERVAL、BINARY、MAP、 STRUCT 和 UNION。
 - StarRocks 2.4 及以上版本支持使用 [DESC](/sql-reference/sql-statements/Utility/DESCRIBE.md) 语句查看 Hive 表结构。查看时，不支持的数据类型会显示成`unknown`。
 
 ## 前提条件
@@ -21,15 +18,15 @@ Hive catalog 是一个外部数据目录 (external catalog)。在 StarRocks 中�
 
 如使用 HDFS 作为存储系统，则需要在 StarRocks 中做如下配置。
 
-- （可选）设置 StarRocks 访问 HDFS 和 Hive metastore 的用户名。 您可以在每个 FE 的 **fe/conf/hadoop_env.sh** 和每个 BE 的 **be/conf/hadoop_env.sh** 文件中通过配置 `HADOOP_USERNAME` 来设置该用户名，设置后重启各个 FE 和 BE 生效。如不设置，则默认使用 FE 和 BE 进程的用户名进行访问。
-
-  > 注意：一个 StarRocks 集群仅支持配置一个用户名。
+- （可选）设置 StarRocks 访问 HDFS 和 Hive metastore 的用户名。 您可以在每个 FE 的 **fe/conf/hadoop_env.sh** 和每个 BE 的 **be/conf/hadoop_env.sh** 文件中通过配置 `HADOOP_USERNAME` 来设置该用户名，设置后重启各个 FE 和 BE 生效。如不设置，则默认使用 FE 和 BE 进程的用户名进行访问。一个 StarRocks 集群仅支持配置一个用户名。
 
 - 查询时，StarRocks 的 FE 和 BE 都会通过 HDFS 客户端访问 HDFS。一般情况下，StarRocks 会按照默认配置来启动 HDFS 客户端，无需手动配置。但在以下场景中，需要进行手动配置：
   - 如 HDFS 开启了 HA（高可用）模式，则需要将 HDFS 集群中的 **hdfs-site.xml** 文件放到每一个 FE 的 **$FE_HOME/conf** 下以及每个 BE 的 **$BE_HOME/conf** 下。  
   - 如 HDFS 配置了 ViewFs，则需要将 HDFS 集群中的 **core-site.xml** 文件放到每一个 FE 的 **$FE_HOME/conf** 下以及每个 BE 的 **$BE_HOME/conf** 下。
 
-> 注意：如果查询时因为域名无法识别而访问失败 (unknown host)，则需要将 HDFS 节点域名和其 IP 的映射关系配置到 **/etc/hosts** 路径中。
+> **注意**
+>
+> 如果查询时因为域名无法识别而访问失败 (unknown host)，则需要将 HDFS 节点域名和其 IP 的映射关系配置到 **/etc/hosts** 路径中。
 
 ### Kerberos 认证
 
@@ -42,9 +39,7 @@ Hive catalog 是一个外部数据目录 (external catalog)。在 StarRocks 中�
 
 如使用 Amazon S3 作为存储系统，则需要在 StarRocks 中做如下配置。
 
-1. 下载[依赖库](https://cdn-thirdparty.starrocks.com/hive_s3_jar.tar.gz)并将其添加到每个 FE 的 **$FE_HOME/lib/** 路径下。
-
-2. 在每个 FE 的 **$FE_HOME/conf/core-site.xml** 文件中添加如下配置。
+1. 在每个 FE 的 **$FE_HOME/conf/core-site.xml** 文件中添加如下配置。
 
       ```XML
       <configuration>
@@ -84,7 +79,7 @@ Hive catalog 是一个外部数据目录 (external catalog)。在 StarRocks 中�
       | fs.s3a.endpoint           | Amazon S3 服务所在地域的 endpoint，例如`s3.us-west-2.amazonaws.com`即为美国西部（俄勒冈）的 endpoint。您可以根据 endpoint 与地域的对应关系进行查找，详情参见 [Amazon Simple Storage Service 终端节点和配额](https://docs.aws.amazon.com/zh_cn/general/latest/gr/s3.html)。 |
       | fs.s3a.connection.maximum | Amazon S3 的最大连接数， 默认值为 500。如查询时有报错 `Timeout waiting for connection from poll`，可适当调高该参数。 |
 
-3. 在每个 BE 的 **$BE_HOME/conf/be.conf** 文件中添加如下配置项。
+2. 在每个 BE 的 **$BE_HOME/conf/be.conf** 文件中添加如下配置项。
 
       | **配置项**                       | **说明**                                                     |
       | -------------------------------- | ------------------------------------------------------------ |
@@ -92,7 +87,7 @@ Hive catalog 是一个外部数据目录 (external catalog)。在 StarRocks 中�
       | object_storage_secret_access_key | AWS 根用户或 IAM 用户的 secret access key，取值和 `fs.s3a.secret.key` 相同。 |
       | object_storage_endpoint          | Amazon S3 服务所在地域的 endpoint，取值和 `fs.s3a.endpoint` 相同。 |
 
-4. 重启所有 FE 和 BE。
+3. 重启所有 FE 和 BE。
 
 ### 腾讯云对象存储 COS
 
@@ -200,7 +195,7 @@ Hive catalog 是一个外部数据目录 (external catalog)。在 StarRocks 中�
 
 3. 重启所有 FE 和 BE。
 
-## 创建Hive catalog
+## 创建 Hive catalog
 
 以上相关配置完成后，即可创建 Hive catalog，语法如下。
 
@@ -217,22 +212,25 @@ PROPERTIES ("key"="value", ...);
 
 - `PROPERTIES`：Hive catalog 的属性，必选参数。<br>支持配置如下：
 
-    | **参数**            | **必选** | **说明**                                                     |
+    | **属性**            | **必选** | **说明**                                                     |
     | ------------------- | -------- | ------------------------------------------------------------ |
     | type                | 是       | 数据源类型，取值为 `hive`。                                   |
     | hive.metastore.uris | 是       | Hive metastore 的 URI。格式为 `thrift://<Hive metastore的IP地址>:<端口号>`，端口号默认为 9083。 |
 
-> 注意
+> **注意**
 >
-> - 使用该创建语句无权限限制。
-> - 查询前，需要将 Hive metastore 节点域名和其 IP 的映射关系配置到 **/etc/hosts** 路径中，否则查询时可能会因为域名无法识别而访问失败。
+> 查询前，需要将 Hive metastore 节点域名和其 IP 的映射关系配置到 **/etc/hosts** 路径中，否则查询时可能会因为域名无法识别而访问失败。
+
+## 使用 Catalog 查询 Hive 数据
+
+创建完 Hive catalog 后即可查询 Hive 集群中的数据。详细信息，请参见[查询外部数据](../catalog/query_external_data.md)。
 
 ## 元数据同步
 
 StarRocks 需要利用 Hive 表的元数据来进行查询规划，因此请求访问 Hive 元数据服务的时间直接影响了查询所消耗的时间。为了降低这种影响，StarRocks 提供了元数据同步功能，即将 Hive 表元数据（包括分区统计信息和分区的数据文件信息）缓存在 StarRocks 中并维护更新。当前支持的同步方式有两种：
 
-- **异步更新**：StarRocks 默认的元数据同步方式，无需做额外的配置即可使用。异步更新需要满足两个条件才可以自动触发更新（具体见原理），这意味着缓存的元数据不会一直维持在最新的状态，在部分场景下，需要手动进行更新。
-- **自动增量更新**：如开启该同步方式，则需要分别在 Hive metastore 和 StarRocks 中进行相应的配置。开启后， StarRocks 内缓存的元数据会一直在维持最新的状态，无需进行手动更新。
+- 异步更新：StarRocks 默认的元数据同步方式，无需做额外的配置即可使用。异步更新需要满足两个条件才可以自动触发更新（具体见原理），这意味着缓存的元数据不会一直维持在最新的状态，在部分场景下，需要手动进行更新。
+- 自动增量更新：如开启该同步方式，则需要分别在 Hive metastore 和 StarRocks 中进行相应的配置。开启后， StarRocks 内缓存的元数据会一直在维持最新的状态，无需进行手动更新。
 
 ### 元数据异步更新
 
@@ -266,7 +264,7 @@ StarRocks 需要利用 Hive 表的元数据来进行查询规划，因此请求�
     [PARTITION ('partition_name', ...)];
     ```
 
-有关 REFRESH EXTERNAL TABEL 语句的参数说明和示例，请参见 [REFRESH EXTERNAL TABEL](/sql-reference/sql-statements/data-definition/REFRESH%20EXTERNAL%20TABLE.md)。注意只有拥有 `ALTER_PRIV` 权限的用户才可以手动更新元数据。
+有关 REFRESH EXTERNAL TABEL 语句的参数说明和示例，请参见 [REFRESH EXTERNAL TABEL](/sql-reference/sql-statements/data-definition/REFRESH%20EXTERNAL%20TABLE.md)。
 
 ### 元数据自动增量更新
 
@@ -322,10 +320,6 @@ Event listener 可以对 Hive metastore 中的 event（例如增减分区、增�
 | hms_events_batch_size_per_rpc      | StarRocks 每次读取 event 的最大数量，默认值为 `500`。        |
 | enable_hms_parallel_process_evens  | 是否并行处理读取的 event ，取值包括：<ul><li>`TRUE`：表示并行处理，为默认值。</li><li>`FALSE`：表示不并行处理。</li></ul>  |
 | hms_process_events_parallel_num    | 每次处理 event 的并发数，默认值为 `4`。                      |
-
-## 下一步
-
-在创建完 Hive catalog 并做完相关的配置后即可查询 Hive 集群中的数据。详细信息，请参见[查询外部数据](../catalog/query_external_data.md)。
 
 ## 相关操作
 

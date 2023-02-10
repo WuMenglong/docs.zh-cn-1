@@ -1,8 +1,8 @@
 # 通过导入实现数据变更
 
-StarRocks 的[主键模型](/table_design/Data_model.md#主键模型)支持通过 [Stream Load](/loading/StreamLoad.md)、[Broker Load](/loading/BrokerLoad.md) 或 [Routine Load](/loading/RoutineLoad.md) 导入作业，对 StarRocks 表进行数据变更，包括插入、更新和删除数据。
+StarRocks 的[主键模型](/table_design/Data_model.md#主键模型)支持通过 [Stream Load](/loading/StreamLoad.md)、[Broker Load](/loading/BrokerLoad.md) 或 [Routine Load](/loading/RoutineLoad.md) 导入作业，对 StarRocks 表进行数据变更，包括插入、更新和删除数据。不支持通过 [Spark Load](../loading/SparkLoad.md) 导入作业或 [INSERT](../loading/InsertInto.md) 语句对 StarRocks 表进行数据变更。
 
-StarRocks 还支持部分更新。该特性目前正在公测中。
+StarRocks 还支持部分更新 (Partial Update)。
 
 本文以 CSV 格式的数据文件为例介绍如何通过导入实现数据变更。具体支持的数据文件类型，跟您选择的导入方式有关。
 
@@ -432,9 +432,9 @@ MySQL [test_db]> SELECT * FROM table3;
 
 从查询结果可以看到，`example3.csv` 文件中 `id` 为 `101` 的数据已经从 `table3` 表中删除，`example3.csv` 文件中 `id` 为 `102` 的数据已经更新到 `table3` 表中，并且 `example3.csv` 文件中 `id` 为 `103` 的数据已经插入到 `table3` 表中。
 
-## 部分更新【公测中】
+## 部分更新
 
-自 StarRocks v2.2 起，主键模型表支持部分更新，您可以选择只更新部分指定的列。这里以 CSV 格式的数据文件为例进行说明。
+自 StarRocks v2.2 起，主键模型表支持部分更新 (Partial Update)，您可以选择只更新部分指定的列。这里以 CSV 格式的数据文件为例进行说明。
 
 ### 数据样例
 

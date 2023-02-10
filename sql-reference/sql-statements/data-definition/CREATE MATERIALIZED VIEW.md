@@ -2,7 +2,7 @@
 
 ## 功能
 
-创建物化视图。创建物化视图是一个异步的操作。CREATE MATERIALIZED VIEW 命令执行成功即代表创建物化视图的任务提交成功。您可以通过 [SHOW ALTER](../sql-reference/sql-statements/data-manipulation/SHOW%20ALTER.md) 命令查看当前数据库中物化视图的构建状态。关于物化视图适用的场景请参考 [物化视图](../../../using_starrocks/Materialized_view.md)。
+创建物化视图。创建物化视图是一个异步的操作。CREATE MATERIALIZED VIEW 命令执行成功即代表创建物化视图的任务提交成功。您可以通过 [SHOW ALTER MATERIALIZED VIEW](../data-manipulation/SHOW%20ALTER%20MATERIALIZED%20VIEW.md) 命令查看当前数据库中物化视图的构建状态。关于物化视图适用的场景请参考 [物化视图](../../../using_starrocks/Materialized_view.md)。
 
 > **注意**
 >
@@ -24,7 +24,7 @@ CREATE MATERIALIZED VIEW [IF NOT EXISTS] [database.]mv_name
 [partition_expression]
 [COMMENT ""]
 [PROPERTIES ("key"="value", ...)]
-AS (query);
+AS (query)
 ```
 
 ## 参数
@@ -74,7 +74,7 @@ SELECT select_expr[, select_expr ...]
   - 如果不指定排序列，则系统根据规则自动补充排序列。 如果物化视图是聚合类型，则所有的分组列自动补充为排序列。 如果物化视图是非聚合类型，则前 36 个字节自动补充为排序列。如果自动补充的排序个数小于 3 个，则前三个作为排序列。
   - 如果查询语句中包含分组列，则排序列必须和分组列一致。
 
-**distribution_desc**（选填）
+**distribution_desc**（建立异步多表物化视图时为**必填**）
 
 物化视图的分桶方式，形如 `DISTRIBUTED BY HASH (k1[,k2 ...]) [BUCKETS num]`。
 
@@ -130,7 +130,7 @@ SELECT select_expr[, select_expr ...]
 
 - 一个物化视图仅支持对同一列数据使用一种聚合函数，不支持形如 `select sum(a), min(a) from table` 的查询语句。
 
-- 使用 ALTER TABLE DROP COLUMN 删除基表中特定列时，需要保证该基表所有物化视图中都包含被删除列，否则无法进行删除操作。如果必须删除该列，则需要将所有未包含该列的物化视图删除，然后进行删除列操作。
+- 使用 ALTER TABLE DROP COLUMN 删除基表中特定列时，需要保证该基表所有物化视图中都包含被删除列，否则无法进行删除操作。如果必须删除该列，则需要将所有包含该列的物化视图删除，然后进行删除列操作。
 
 - 为一张表创建过多的物化视图会影响导入的效率。导入数据时，物化视图和基表数据将同步更新，如果一张基表包含 n 个物化视图，向基表导入数据时，其导入效率大约等同于导入 n 张表，数据导入的速度会变慢。
 
