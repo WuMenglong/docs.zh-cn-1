@@ -67,7 +67,7 @@ SHOW LOAD [ FROM db_name ]
 
 ## 注意事项
 
-- 导入作业相关信息具有时效性。默认自一个导入作业的完成时间 (`LoadFinishTime`) 起 3 天内可以查看到该导入作业的相关信息；3天后，信息会失效，无法查到。您可以通过 FE 参数 `label_keep_max_second` 修改默认有效时间（单位：秒），操作如下：
+- 导入作业相关信息具有时效性。默认自一个导入作业的完成时间 (`LoadFinishTime`) 起 3 天内可以查看到该导入作业的相关信息；3 天后，信息会失效，无法查到。您可以通过 FE 参数 `label_keep_max_second` 修改默认有效时间（单位：秒），操作如下：
 
     ```SQL
     ADMIN SET FRONTEND CONFIG ("label_keep_max_second" = "value");

@@ -2,7 +2,13 @@
 
 本文介绍如何使用 StarGo 部署管理 StarRocks 集群。
 
-StarGo 是一个用于管理多个 StarRocks 集群的命令行工具。通过 StarGo，您可以使用简单的命令行实现多集群的部署、查看、升级、启动与停止等操作。
+> **说明**
+>
+> **目前 StarGo 正在由社区改造优化，建议使用社区的[最新版本](https://forum.mirrorship.cn/t/topic/4945)进行集群部署。因改造过程中迭代较快，功能调整较为频繁，故待社区改造工作基本完成后，本文再进行最终的更新。**
+
+**下文为基于旧版本的部署操作，目前不再建议使用**。
+
+StarGo 是一个用于管理多个 StarRocks 集群的命令行工具。通过 StarGo，您可以使用简单的命令行实现多集群的部署、查看、升级、启动与停止等操作。该工具从 2.3 版本开始支持。
 
 ## 部署 StarGo
 
@@ -356,7 +362,7 @@ ID                          ROLE    HOST                  PORT             STAT 
 ./stargo cluster start <cluster_name> --node <node_ID>
 ```
 
-您可以通过[查看指定集群信息](#查看指定集群信息) 查看集群中特定节点的 ID。
+您可以通过[查看指定集群信息](#查看指定集群信息)查看集群中特定节点的 ID。
 
 示例：
 
@@ -449,7 +455,7 @@ ID                          ROLE    HOST                  PORT             STAT 
 ./stargo cluster stop <cluster_name> --node <node_ID>
 ```
 
-您可以通过[查看指定集群信息](#查看指定集群信息) 查看集群中特定节点的 ID。
+您可以通过[查看指定集群信息](#查看指定集群信息)查看集群中特定节点的 ID。
 
 示例：
 
@@ -624,7 +630,7 @@ ID                          ROLE    HOST                  PORT             STAT 
 ./stargo cluster scale-in <cluster_name> --node <node_id>
 ```
 
-您可以通过[查看指定集群信息](#查看指定集群信息) 查看集群中特定节点的 ID。
+您可以通过[查看指定集群信息](#查看指定集群信息)查看集群中特定节点的 ID。
 
 示例：
 

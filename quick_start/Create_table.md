@@ -14,6 +14,10 @@ mysql -h <fe_host> -P9030 -u root
 
 使用 `root` 用户创建 `example_db` 数据库。
 
+> **注意**
+>
+> 在指定数据库名、表名和列名等变量时，如果使用了保留关键字，必须使用反引号 (`) 包裹，否则可能会产生报错。有关 StarRocks 的保留关键字列表，请参见[关键字](../keywords.md#保留关键字)。
+
 ```sql
 CREATE DATABASE example_db;
 ```
@@ -39,7 +43,7 @@ MySQL [(none)]> SHOW DATABASES;
 
 在新建的数据库中创建表。
 
-StarRocks 支持 [多种数据模型](../table_design/Data_model.md)，以适用不同的应用场景。以下示例基于 [明细表模型](../table_design/Data_model.md#明细模型) 编写建表语句。
+StarRocks 支持 [多种数据模型](../table_design/table_types/table_types.md)，以适用不同的应用场景。以下示例基于 [明细表模型](../table_design/table_types/duplicate_key_table.md) 编写建表语句。
 
 更多建表语法，参考 [CREATE TABLE](/sql-reference/sql-statements/data-definition/CREATE%20TABLE.md) 。
 
@@ -105,7 +109,7 @@ StarRocks 表中支持多种字段类型，除以上示例中已经列举的字�
 
 #### 数据模型
 
-`DUPLICATE` 关键字表示当前表为明细模型，`KEY` 中的列表示当前表的排序列。StarRocks 支持多种数据模型，分别为 [明细模型](/table_design/Data_model.md#明细模型)，[聚合模型](/table_design/Data_model.md#聚合模型)，[更新模型](/table_design/Data_model.md#更新模型)，[主键模型](/table_design/Data_model.md#主键模型)。不同模型的适用于多种业务场景，合理选择可优化查询效率。
+`DUPLICATE` 关键字表示当前表为明细模型，`KEY` 中的列表示当前表的排序列。StarRocks 支持多种数据模型，分别为 [明细模型](/table_design/table_types/duplicate_key_table.md)，[聚合模型](/table_design/table_types/aggregate_table.md)，[更新模型](/table_design/table_types/unique_key_table.md)，[主键模型](/table_design/table_types/primary_key_table.md)。不同模型的适用于多种业务场景，合理选择可优化查询效率。
 
 #### 索引
 
@@ -115,7 +119,7 @@ StarRocks 默认会给 Key 列创建稀疏索引加速查询，具体规则见 [
 
 #### ENGINE 类型
 
-默认 ENGINE 类型为 `OLAP`，对应 StarRocks 集群内部表。其他可选项包括 `mysql`，`elasticsearch`，`hive`，以及 `ICEBERG`，分别代表所创建的表为相应类型的 [外部表](/data_source/External_table.md)。
+默认 ENGINE 类型为 `olap`，对应 StarRocks 集群内部表。其他可选项包括 `mysql`，`elasticsearch`，`hive`，`jdbc`（2.3 及以后），`hudi`（2.2 及以后）以及 `iceberg`，分别代表所创建的表为相应类型的 [外部表](../data_source/External_table.md)。
 
 ## 查看表信息
 
@@ -157,7 +161,7 @@ SHOW CREATE TABLE detailDemo;
 
 StarRocks 支持多种 DDL 操作。
 
-您可以通过 [ALTER TABLE](/sql-reference/sql-statements/data-definition/ALTER%20TABLE.md) 命令可以修改表的 Schema，包括增加列，删除列，修改列类型（暂不支持修改列名称），改变列顺序。
+您可以通过 [ALTER TABLE](/sql-reference/sql-statements/data-definition/ALTER%20TABLE.md#schema-change) 命令可以修改表的 Schema，包括增加列，删除列，修改列类型（暂不支持修改列名称），改变列顺序。
 
 ### 增加列
 

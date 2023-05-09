@@ -24,7 +24,7 @@
 
 ## 准备工作
 
-在 StarRocks 中创建数据库 `load_test`，并在其中创建聚合模型表 `insert_wiki_edit` 以及数据源表 `source_wiki_edit`。
+在 StarRocks 中创建数据库 `load_test`，并在其中创建导入目标表 `insert_wiki_edit` 以及数据源表 `source_wiki_edit`。
 
 > **说明**
 >
@@ -43,11 +43,21 @@ CREATE TABLE insert_wiki_edit
     is_new TINYINT DEFAULT '0',
     is_robot TINYINT DEFAULT '0',
     is_unpatrolled TINYINT DEFAULT '0',
-    delta INT SUM DEFAULT '0',
-    added INT SUM DEFAULT '0',
-    deleted INT SUM DEFAULT '0'
+    delta INT DEFAULT '0',
+    added INT DEFAULT '0',
+    deleted INT DEFAULT '0'
 )
-AGGREGATE KEY(event_time, channel, user, is_anonymous, is_minor, is_new, is_robot, is_unpatrolled)
+DUPLICATE KEY
+(
+    event_time,
+    channel,
+    user,
+    is_anonymous,
+    is_minor,
+    is_new,
+    is_robot,
+    is_unpatrolled
+)
 PARTITION BY RANGE(event_time)
 (
     PARTITION p06 VALUES LESS THAN ('2015-09-12 06:00:00'),
@@ -67,11 +77,21 @@ CREATE TABLE source_wiki_edit
     is_new TINYINT DEFAULT '0',
     is_robot TINYINT DEFAULT '0',
     is_unpatrolled TINYINT DEFAULT '0',
-    delta INT SUM DEFAULT '0',
-    added INT SUM DEFAULT '0',
-    deleted INT SUM DEFAULT '0'
+    delta INT DEFAULT '0',
+    added INT DEFAULT '0',
+    deleted INT DEFAULT '0'
 )
-AGGREGATE KEY(event_time, channel, user, is_anonymous, is_minor, is_new, is_robot, is_unpatrolled)
+DUPLICATE KEY
+(
+    event_time,
+    channel,
+    user,
+    is_anonymous,
+    is_minor,
+    is_new,
+    is_robot,
+    is_unpatrolled
+)
 PARTITION BY RANGE(event_time)
 (
     PARTITION p06 VALUES LESS THAN ('2015-09-12 06:00:00'),

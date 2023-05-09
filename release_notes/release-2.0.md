@@ -128,7 +128,7 @@
 
 ### Behavior Change
 
-- StarRocks支持使用Hive外表访问创建在Hive外表上的Amazon S3外表。由于用于访问Amazon S3外表的jar包较大，因此StarRocks二进制产品包目前暂未包含该jar包。如有需要，请单击[Hive_s3_lib](https://cdn-thirdparty.starrocks.com/hive_s3_jar.tar.gz)进行下载。
+- StarRocks支持使用Hive外表访问创建在Hive外表上的Amazon S3外表。由于用于访问Amazon S3外表的jar包较大，因此StarRocks二进制产品包目前暂未包含该jar包。如有需要，请单击[Hive_s3_lib](https://releases.mirrorship.cn/resources/hive_s3_jar.tar.gz)进行下载。
 
 ## 2.0.0
 
@@ -143,7 +143,7 @@
 - Broker Load支持华为OBS [#1182](https://github.com/StarRocks/starrocks/pull/1182)
 - 支持国密算法sm3
 - 适配ARM类国产CPU：通过鲲鹏架构验证
-- 主键模型（Primary Key）正式发布，该模型支持Stream Load、Broker Load、Routine Load，同时提供了基于Flink-cdc的MySQL数据的秒级同步工具。[参考文档](/table_design/Data_model.md#主键模型)
+- 主键模型（Primary Key）正式发布，该模型支持Stream Load、Broker Load、Routine Load，同时提供了基于Flink-cdc的MySQL数据的秒级同步工具。[参考文档](/table_design/table_types/primary_key_table.md)
 
 ### 功能优化
 

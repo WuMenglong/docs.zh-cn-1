@@ -2,7 +2,7 @@
 
 本文介绍如何使用临时分区功能。
 
-临时分区功能，可以在一张已经定义分区规则的分区表上，直接添加新的、临时的分区规则，并为这些新分区定义新的数据分布策略，以便给您的原子覆盖写操作或调整分区、分桶操作提供临时可用的数据载体。您可以为临时分区设定与正常分区不同的数据覆盖范围，分桶数、副本数、存储介质等属性，以满足不同需求。
+您可以在一张已经定义分区规则的分区表上，创建临时分区，并为这些临时分区定义新的数据分布策略，以便给您的原子覆盖写操作或调整分区、分桶操作提供临时可用的数据载体。支持为临时分区重新设定的数据分布策略包括分区范围、分桶数、以及一些属性，例如副本数、存储介质，以满足不同需求。
 
 在以下应用场景中，您可以使用临时分区功能：
 
@@ -17,7 +17,7 @@
 
 ## 创建临时分区
 
-您可以通过以下命令创建临时分区。
+您可以通过 ALTER TABLE 命令创建临时分区。
 
 ```sql
 ALTER TABLE table_name ADD TEMPORARY PARTITION partition_name;
@@ -31,14 +31,6 @@ ALTER TABLE tbl1 ADD TEMPORARY PARTITION tp1 VALUES LESS THAN("2020-02-01");
 ALTER TABLE tbl2 ADD TEMPORARY PARTITION tp1 VALUES [("2020-01-01"), ("2020-02-01"));
 
 ALTER TABLE tbl1 ADD TEMPORARY PARTITION tp1 VALUES LESS THAN("2020-02-01")
-("in_memory" = "true", "replication_num" = "1")
-DISTRIBUTED BY HASH(k1) BUCKETS 5;
-
-ALTER TABLE tbl3 ADD TEMPORARY PARTITION tp1 VALUES IN ("Beijing", "Shanghai");
-
-ALTER TABLE tbl4 ADD TEMPORARY PARTITION tp1 VALUES IN ((1, "Beijing"), (1, "Shanghai"));
-
-ALTER TABLE tbl3 ADD TEMPORARY PARTITION tp1 VALUES IN ("Beijing", "Shanghai")
 ("in_memory" = "true", "replication_num" = "1")
 DISTRIBUTED BY HASH(k1) BUCKETS 5;
 ```
@@ -56,7 +48,7 @@ DISTRIBUTED BY HASH(k1) BUCKETS 5;
 
 ### 通过 INSERT INTO 命令导入
 
-您可以通过以下 `INSERT INTO` 命令将数据导入临时分区
+您可以通过以下 `INSERT INTO` 命令将数据导入临时分区。
 
 ```sql
 INSERT INTO table_name TEMPORARY PARTITION(tp_name1, tp_name2, ...) SELECT (sql_statement);
@@ -158,7 +150,7 @@ PROPERTIES (
 
     默认为 `true`。
 
-    对于 Range 分区，当该参数为 `true` 时，表示要被替换的所有正式分区的范围并集需要和替换的临时分区的范围并集完全相同。当设置为 `false` 时，只需要保证替换后，新的正式分区间的范围不重叠即可。
+    当该参数为 `true` 时，表示要被替换的所有正式分区的范围并集需要和替换的临时分区的范围并集完全相同。当设置为 `false` 时，只需要保证替换后，新的正式分区间的范围不重叠即可。
 
     示例 1：
 
@@ -183,30 +175,6 @@ PROPERTIES (
     ```
 
     以上示例中范围并集不相同，如果 `strict_range` 设置为 `true`，则不可以使用 tp1 和 tp2 替换 p1。如果为 `false`，且替换后的两个分区范围 [10, 30), [40, 50) 和其他正式分区不重叠，则可以替换。
-
-    示例 3：
-
-    ```plain text
-    # 待替换的分区 p1, p2 的枚举值 (=> 并集)
-    (1, 2, 3), (4, 5, 6) => (1, 2, 3, 4, 5, 6)
-
-    # 替换分区 tp1, tp2, tp3 的枚举值 (=> 并集)
-    (1, 2, 3), (4), (5, 6) => (1, 2, 3, 4, 5, 6)
-    ```
-
-    以上示例中枚举值并集相同，可以使用 tp1，tp2，tp3 替换 p1，p2。
-
-    示例 4：
-
-    ```plain text
-    # 待替换的分区 p1, p2，p3 的枚举值(=> 并集)：
-    (("1","beijing"), ("1", "shanghai")), (("2","beijing"), ("2", "shanghai")), (("3","beijing"), ("3", "shanghai")) => (("1","beijing"), ("1", "shanghai"), ("2","beijing"), ("2", "shanghai"), ("3","beijing"), ("3", "shanghai"))
-
-    # 替换分区 tp1, tp2 的枚举值(=> 并集)：
-    (("1","beijing"), ("1", "shanghai")), (("2","beijing"), ("2", "shanghai"), ("3","beijing"), ("3", "shanghai")) => (("1","beijing"), ("1", "shanghai"), ("2","beijing"), ("2", "shanghai"), ("3","beijing"), ("3", "shanghai"))
-    ```
-
-    以上示例中枚举值并集相同，可以使用 tp1，tp2 替换 p1，p2，p3。
 
 * **use_temp_partition_name**
 

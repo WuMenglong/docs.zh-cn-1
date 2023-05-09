@@ -35,6 +35,13 @@ sh bin/start_fe.sh --daemon
 
 为了保证 FE 高可用，您需要部署多个 FE 节点。我们建议您部署 3 个 FE 节点，其中包含 1 个 Leader FE 节点和 2 个 Follower FE 节点。
 
+在初次部署时，第一个启动的 FE 会默认成为 Leader FE，后启动的 Follower FE 在**首次启动**时需要指定已存活在集群中的 Follower FE 作为 helper 节点（仅首次启动时需要指定，helper 节点通常选用 Leader FE 节点）。
+
+```shell
+cd StarRocks-x.x.x/fe
+sh bin/start_fe.sh --helper <Leader_FE_IP>:<edit_log_port> --daemon
+```
+
 > 注意
 >
 > 当拥有多个 Follower FE 节点时，集群内需要有半数以上的 Follower FE 节点存活才能够选举出 Leader FE 节点，从而提供查询服务。
@@ -151,16 +158,17 @@ sh bin/stop_cn.sh
 > 注意
 >
 > * 由于 StarRocks 保证 BE 后向兼容 FE，因此您需要**先升级 BE 节点，再升级 FE 节点**。错误的升级顺序可能导致新旧 FE、BE 节点不兼容，进而导致 BE 节点停止服务。
-> * StarRocks 2.0 之前的大版本升级时必须逐个大版本升级，2.0 之后的版本可以跨大版本升级。StarRocks 2.0 是当前的长期支持版本（Long Term Support，LTS），维护期为半年以上。
+> * StarRocks 2.0 之前的大版本升级时必须**逐个大版本**升级，2.0 之后的版本可以**跨大版本**升级。更为推荐的稳妥方式是逐个版本升级，比如 1.19->2.0->2.1->2.2->2.3->2.4。StarRocks 2.2 是当前的长期支持版本（Long Term Support，LTS），维护期为半年以上。
 >
 > |版本|可直接升级版本|注意事项|是否为 LTS 版本|
 > |----|------------|--------|--------------|
 > |1.18.x||更早版本需要按照 <a href="update_from_dorisdb.md">标准版 DorisDB 升级到社区版 StarRocks</a> 操作。|否|
 > |1.19.x|必须从1.18.x升级||否|
-> |2.0.x|必须从1.19.x升级|升级过程中需要暂时关闭 Clone。|是|
+> |2.0.x|必须从1.19.x升级|升级过程中需要暂时关闭 Clone。|否|
 > |2.1.x|必须从2.0.x 升级|灰度升级前需要修改 <code>vector_chunk_size</code> 和 <code>batch_size</code>。|否|
-> |2.2.x|可以从2.0.x 或 2.1.x 升级|回滚需要配置 <code>ignore_unknown_log_id</code> 为 <code>true</code>。||
-> |2.3.x|可以从2.0.x、2.1.x 或 2.2.x 升级|不建议跨版本回滚。回滚需要配置 <code>ignore_unknown_log_id</code> 为 <code>true</code>。||
+> |2.2.x|可以从2.0.x 或 2.1.x 升级|回滚需要配置 <code>ignore_unknown_log_id</code> 为 <code>true</code>。|是|
+> |2.3.x|可以从2.0.x、2.1.x 或 2.2.x 升级|不建议跨版本回滚。回滚需要配置 <code>ignore_unknown_log_id</code> 为 <code>true</code>。|否|
+> |2.4.x|可以从2.0.x、2.1.x、2.2.x 或 2.3.x 升级|不建议跨版本回滚。如果您开启了 [FQDN 访问](../administration/enable_fqdn.md)，需先将集群修改为 IP 地址访问。|否|
 
 ### 下载安装文件
 
@@ -186,11 +194,14 @@ admin set frontend config ("disable_colocate_balance"="false");
 
 ### 测试 BE 升级的正确性
 
-1. 选择任意一个 BE 节点，替换新版本 **/lib/starrocks_be** 文件。
-2. 重启该 BE 节点，通过 BE 日志 **be.INFO** 查看是否启动成功。
-3. 如果该 BE 节点启动失败，您可以可以先排查失败原因。如果错误不可恢复，您可以直接通过 `DROP BACKEND` 删除该 BE、清理数据后，使用上一个版本的 **starrocks_be** 重新启动该 BE 节点。然后通过 `ADD BACKEND` 重新添加 BE 节点。
+1. 选择任意一个 BE 节点，停止该节点。
+2. 替换改节点路径下的 **bin** 和 **lib** 文件夹。
+3. 启动该 BE 节点，通过 BE 日志 **be.INFO** 查看是否启动成功。
+4. 如果该 BE 节点启动失败，您可以先排查失败原因。如果错误不可恢复，您可以直接通过 `DROP BACKEND` 删除该 BE、清理数据后，使用上一个版本的 **starrocks_be** 重新启动该 BE 节点。然后通过 `ADD BACKEND` 重新添加 BE 节点。
 
-> 警告：**该方法会导致系统丢失一个数据副本，请务必确保 3 副本完整的情况下执行这个操作。**
+> **警告**
+>
+> **该方法会导致系统丢失一个数据副本，请务必确保 3 个副本完整的情况下执行这个操作。**
 
 ### 升级 BE 节点
 
@@ -212,8 +223,8 @@ admin set frontend config ("disable_colocate_balance"="false");
     ```shell
     mv lib lib.bak 
     mv bin bin.bak
-    cp -r /tmp/StarRocks-SE-x.x.x/be/lib  .
-    cp -r /tmp/StarRocks-SE-x.x.x/be/bin  .
+    cp -r /tmp/StarRocks-x.x.x/be/lib  .
+    cp -r /tmp/StarRocks-x.x.x/be/bin  .
     ```
 
 3. 启动 BE 节点。
@@ -263,17 +274,18 @@ admin set frontend config ("disable_colocate_balance"="false");
 
 2. 替换 FE 相关文件。
 
-    > 注意
+    > **注意**
     >
-    > FE 节点小版本升级中（例如从 2.0.x 升级到 2.0.y），您只需升级 **/lib/starrocks-fe.jar**。而大版本升级中（例如从 2.0.x 升级到 2.x.x），您需要替换 FE 节点路径下的 **bin** 和 **lib** 文件夹。
+    > FE 节点小版本升级中（例如从 2.0.x 升级到 2.0.y），您只需升级 **/lib/starrocks-fe.jar**。而大版本升级中（例如从 2.0.x 升级到 2.x.x），您需要替换 FE 节点路径下的 **bin**、**lib** 和 **spark-dpp** 文件夹。
 
     以下示例以大版本升级为例。
 
     ```shell
     mv lib lib.bak 
     mv bin bin.bak
-    cp -r /tmp/StarRocks-SE-x.x.x/fe/lib  .   
-    cp -r /tmp/StarRocks-SE-x.x.x/fe/bin  .
+    cp -r /tmp/StarRocks-x.x.x/fe/lib  .   
+    cp -r /tmp/StarRocks-x.x.x/fe/bin  .
+    cp -r /tmp/StarRocks-x.x.x/fe/spark-dpp  .
     ```
 
 3. 启动 FE 节点。
@@ -292,13 +304,42 @@ admin set frontend config ("disable_colocate_balance"="false");
 
 ### 升级 CN 节点
 
-由于 CN 节点是无状态的，因此，只需要替换二进制文件，然后重新启动进程即可，推荐使用 graceful 的停止方式。
+升级 CN 节点时，您需要根据升级的版本，选择对应的升级方式：
 
-```shell
-sh bin/stop_cn.sh --graceful
-```
+* 如果为小版本升级（例如从 2.0.x 升级到 2.0.y），则只需要替换二进制文件 **/lib/starrocks_be**，然后重启服务。
+* 如果为大版本升级 （例如从 2.0.x 升级到 2.x.x），您需要替换 BE 节点路径下的 bin 和 lib 文件夹。
 
-使用该种方式停止，CN会等待当前运行的任务运行结束后再退出进程
+以下示例以大版本升级为例。
+
+1. 进入 CN 路径，停止 CN 节点。推荐使用 graceful 的停止方式。使用该种方式停止，CN 会等待当前运行的任务运行结束后再退出进程。
+
+    ```Shell
+    cd StarRocks-x.x.x/be
+    sh bin/stop_cn.sh --graceful
+    ```
+
+2. 替换 CN 节点相关文件。
+
+    ```Shell
+    mv lib lib.bak 
+    mv bin bin.bak
+    cp -r /tmp/StarRocks-x.x.x/be/lib  .
+    cp -r /tmp/StarRocks-x.x.x/be/bin  .
+    ```
+
+3. 启动 CN 节点。
+
+    ```Shell
+    sh bin/start_cn.sh --daemon
+    ```
+
+4. 确认当前节点启动成功。
+
+    ```Shell
+    ps aux | grep starrocks_be
+    ```
+
+5. 重复以上步骤，升级其他 CN 节点。
 
 ### 升级 Broker
 
@@ -314,8 +355,8 @@ sh bin/stop_cn.sh --graceful
     ```shell
     mv lib lib.bak 
     mv bin bin.bak
-    cp -r /tmp/StarRocks-SE-x.x.x/apache_hdfs_broker/lib  .   
-    cp -r /tmp/StarRocks-SE-x.x.x/apache_hdfs_broker/bin  .
+    cp -r /tmp/StarRocks-x.x.x/apache_hdfs_broker/lib  .   
+    cp -r /tmp/StarRocks-x.x.x/apache_hdfs_broker/bin  .
     ```
 
 3. 启动 Broker 节点。
@@ -333,15 +374,15 @@ sh bin/stop_cn.sh --graceful
 升级开始前，您需要关闭 Clone。
 
 ```sql
-ADMIN SET FRONTEND CONFIG ("tablet_sched_max_scheduling_tablets" = "0");
-ADMIN SET FRONTEND CONFIG ("tablet_sched_max_balancing_tablets" = "0");
+ADMIN SET FRONTEND CONFIG ("max_scheduling_tablets" = "0");
+ADMIN SET FRONTEND CONFIG ("max_balancing_tablets" = "0");
 ```
 
 升级结束后，开启 Clone。
 
 ```sql
-ADMIN SET FRONTEND CONFIG ("tablet_sched_max_scheduling_tablets" = "2000");
-ADMIN SET FRONTEND CONFIG ("tablet_sched_max_balancing_tablets" = "100");
+ADMIN SET FRONTEND CONFIG ("max_scheduling_tablets" = "2000");
+ADMIN SET FRONTEND CONFIG ("max_balancing_tablets" = "100");
 ```
 
 ### 关于 StarRocks 2.0.x 灰度升级至 2.1.x
@@ -367,13 +408,32 @@ mysql> show variables like '%batch_size%';
 mysql> set global batch_size = 4096;
 ```
 
+#### 故障排除
+
+Q：升级 StarRocks 2.0 至 2.1 及后期版本后，通过 Stream Load 将 JSON 格式的 BOOLEAN 类型数据导入至整形列中返回 NULL。我该如何处理？
+
+A：StarRocks 2.0 版本将所有字段作为字符串解析，然后进行类型转换。将执行格式为 JSON 且类型为 BOOLEAN 的数据（`true` 和 `false`）导入至整形列中时，StarRocks 2.0 会将数据转化为 `0` 和 `1` 后导入。StarRocks 2.1 及后期版本重制了 JSON Parser，直接按照目标列类型提取 JSON 字段，从而导致最终得到的数据为 NULL。
+
+您可以通过在导入命令 `columns` 项中添加表达式 `tmp, target=if(tmp,1,0)` 解决该问题。完整导入命令如下：
+
+```shell
+curl --location-trusted -u root:
+-H "columns: <col_name_1>, <col_name_2>, <tmp>, <col_name_3>=if(<tmp>,1,0)" 
+-T demo.csv -XPUT 
+http://<fe_ip>:<fe_http_port>/api/<db_name>/<table_name>/_stream_load
+```
+
 ## 回滚集群
 
 您可以通过命令回滚 StarRocks 版本，回滚范围包括所有安装包名为 **StarRocks-xx** 的版本。当升级后发现出现异常状况，不符合预期，想快速恢复服务的，可以按照下述操作回滚版本。
 
-> 注意
+> **注意**
 >
 > 回滚操作与升级操作的顺序相反，应当**先回滚 FE 节点，再回滚 BE 节点** 。错误的回滚顺序可能导致新旧 FE、BE 节点不兼容，进而导致 BE 节点停止服务。
+
+### 前置工作
+
+回滚 StarRocks 2.2 及以后版本前，您需要在所有 FE 节点的配置文件 **fe.conf** 中增加配置项 `ignore_unknown_log_id=true`，否则回滚后系统可能无法启动。重启 StarRocks，CheckPoint 完成后，您需要将该设置项恢复为 `ignore_unknown_log_id=false`，然后重启 FE 以恢复正常配置。
 
 ### 下载安装文件
 
@@ -381,34 +441,44 @@ mysql> set global batch_size = 4096;
 
 ### 回滚 FE 节点
 
-进入 FE 路径，并替换相关文件。以下示例以大版本回滚为例。
+您需要先回滚各 Follower FE 节点，最后回滚 Leader FE 节点。以下示例以大版本回滚为例。
 
 > 注意
 >
 > * FE 节点小版本回滚中（例如从 2.0.y 回滚到 2.0.x），您只需回滚 **/lib/starrocks-fe.jar**。
-> * FE 节点大版本回滚中（例如从 2.x.x 升级到 2.0.x），您需要替换 FE 节点路径下的 **bin** 和 **lib** 文件夹。
+> * FE 节点大版本回滚中（例如从 2.x.x 升级到 2.0.x），您需要替换 FE 节点路径下的 **bin**、**lib** 和 **spark-dpp** 文件夹。
 > * 从 2.1.x 回滚至 2.0.x及以前版本需要通过以下命令关闭 pipeline：`set global enable_pipeline_engine = false`。
 
-```shell
-cd StarRocks-x.x.x/fe
-mv lib libtmp.bak 
-mv bin bintmp.bak 
-mv lib.bak lib   
-mv bin.bak bin 
-```
+1. 进入 FE 路径，停止 FE 节点。
 
-逐台重启 FE 节点。
+    ```shell
+    cd StarRocks-x.x.x/fe
+    sh bin/stop_fe.sh
+    ```
 
-```shell
-sh bin/stop_fe.sh
-sh bin/start_fe.sh --daemon
-```
+2. 替换 FE 相关文件。
 
-在启动下一台实例之前，您需要确认当前实例启动成功。
+    ```shell
+    mv lib lib.bak 
+    mv bin bin.bak
+    cp -r /tmp/StarRocks-x.x.x/fe/lib  .   
+    cp -r /tmp/StarRocks-x.x.x/fe/bin  .
+    cp -r /tmp/StarRocks-x.x.x/fe/spark-dpp  .
+    ```
 
-```shell
-ps aux | grep StarRocksFE
-```
+3. 启动 FE 节点。
+
+    ```shell
+    sh bin/start_fe.sh --daemon
+    ```
+
+4. 确认当前节点启动成功。
+
+    ```shell
+    ps aux | grep StarRocksFE
+    ```
+
+5. 重复以上步骤，回滚其他 Follower FE 节点，并最后回滚 Leader FE 节点。
 
 ### 回滚 BE 节点前的准备
 
@@ -430,61 +500,64 @@ admin set frontend config ("disable_colocate_balance"="false");
 
 ### 回滚 BE 节点
 
-进入 BE 路径，并替换相关文件。以下示例以大版本回滚为例。
+以下示例以大版本回滚为例。
 
-> 注意
+> **注意**
 >
 > BE 节点小版本回滚中（例如从 2.0.y 回滚到 2.0.x），您只需回滚 **/lib/starrocks_be**。而大版本回滚中（例如从 2.x.x 升级到 2.0.x），您需要替换 BE 节点路径下的 **bin** 和 **lib** 文件夹。
 
-```shell
-cd StarRocks-x.x.x/be
-mv lib libtmp.bak 
-mv bin bintmp.bak 
-mv lib.bak lib
-mv bin.bak bin
-```
+1. 进入 BE 路径，停止 BE 节点。
 
-逐台重启 BE 节点。
+    ```shell
+    cd StarRocks-x.x.x/be
+    sh bin/stop_be.sh
+    ```
 
-```shell
-sh bin/stop_be.sh
-sh bin/start_be.sh --daemon
-```
+2. 替换 BE 节点相关文件。
 
-在启动下一台实例之前，您需要确认当前实例启动成功。
+    ```shell
+    mv lib lib.bak 
+    mv bin bin.bak
+    cp -r /tmp/StarRocks-x.x.x/be/lib  .
+    cp -r /tmp/StarRocks-x.x.x/be/bin  .
+    ```
 
-```shell
-ps aux | grep starrocks_be
-```
+3. 启动 BE 节点。
+
+    ```shell
+    sh bin/start_be.sh --daemon
+    ```
+
+4. 确认当前节点启动成功。
+
+    ```shell
+    ps aux | grep starrocks_be
+    ```
+
+5. 重复以上步骤，回滚其他 BE 节点。
 
 ### 回滚 Broker
 
-进入 Broker 路径，并替换相关文件。
+1. 进入 Broker 路径，停止 Broker 节点。
 
-```shell
-cd StarRocks-x.x.x/be
-mv lib libtmp.bak 
-mv bin bintmp.bak
-mv lib.bak lib
-mv bin.bak bin
-```
+    ```shell
+    cd StarRocks-x.x.x/apache_hdfs_broker
+    sh bin/stop_broker.sh
+    ```
 
-逐台重启 BE 节点。
+2. 替换 Broker 相关文件。
 
-```shell
-sh bin/stop_broker.sh
-sh bin/start_broker.sh --daemon
-```
+    ```shell
+    mv lib lib.bak 
+    mv bin bin.bak
+    cp -r /tmp/StarRocks-x.x.x/apache_hdfs_broker/lib  .   
+    cp -r /tmp/StarRocks-x.x.x/apache_hdfs_broker/bin  .
+    ```
 
-在启动下一台实例之前，您需要确认当前实例启动成功。
+3. 启动 Broker 节点。
 
-```shell
-ps aux | grep broker
-```
+    ```shell
+    sh bin/start_broker.sh --daemon
+    ```
 
-### 关于 StarRocks 2.2.x 回滚至较早版本
-
-StarRocks 2.2 版本中 FE 节点新增了日志类型。如果直接从 2.2.x 回滚至较早版本，您可能会碰到较早版本的 FE 无法识别的错误。您可以通过以下方式解决：
-
-1. 在 **fe.conf** 中增加配置项 `ignore_unknown_log_id=true`，然后重启 FE。否则回滚后系统可能无法启动。
-2. Checkpoint 完成后，推荐您将该设置项恢复为 `ignore_unknown_log_id=false`，然后重启 FE 以恢复正常配置。
+4. 在升级下一台实例之前，您需要确认当前实例启动成功。

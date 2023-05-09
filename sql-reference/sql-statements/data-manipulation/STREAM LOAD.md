@@ -26,6 +26,8 @@ curl --location-trusted -u <username>:<password> -XPUT <url>
 
 - 建议在 HTTP 请求的请求头字段 `Expect` 中指定 `100-continue`，即 `"Expect:100-continue"`。这样在服务器拒绝导入作业请求的情况下，可以避免不必要的数据传输，从而减少不必要的资源开销。
 
+注意在 StarRocks 中，部分文字是 SQL 语言的保留关键字，不能直接用于 SQL 语句。如果想在 SQL 语句中使用这些保留关键字，必须用反引号 (`) 包含起来。参见[关键字](/sql-reference/sql-statements/keywords.md)。
+
 ## 参数说明
 
 ### `username` 和 `password`
@@ -55,7 +57,7 @@ http://<fe_host>:<fe_http_port>/api/<database_name>/<table_name>/_stream_load
 
 ### `data_desc`
 
-用于描述待导入数据文件，包括待导入数据文件的名称、格式、列分隔符、行分隔符、目标分区、以及与 StarRocks 表之间的列对应关系等。语法如下：
+用于描述源数据文件，包括源数据文件的名称、格式、列分隔符、行分隔符、目标分区、以及与 StarRocks 表之间的列对应关系等。语法如下：
 
 ```Bash
 -T <file_name>
@@ -75,25 +77,32 @@ http://<fe_host>:<fe_http_port>/api/<database_name>/<table_name>/_stream_load
 
 | **参数名称** | **是否必选** | **参数说明**                                                 |
 | ------------ | ------------ | ------------------------------------------------------------ |
-| file_name    | 是           | 指定待导入数据文件的名称。文件名里可选包含或者不包含扩展名。 |
+| file_name    | 是           | 指定源数据文件的名称。文件名里可选包含或者不包含扩展名。 |
 | format       | 否           | 指定待导入数据的格式。取值包括 `CSV` 和 `JSON`。默认值：`CSV`。 |
 | partitions   | 否           | 指定要把数据导入哪些分区。如果不指定该参数，则默认导入到 StarRocks 表所在的所有分区中。 |
-| columns      | 否           | 指定待导入数据文件和 StarRocks 表之间的列对应关系。如果待导入数据文件中的列与 StarRocks 表中的列按顺序一一对应，则不需要指定 `columns` 参数。您可以通过 `columns` 参数实现数据转换。例如，要导入一个 CSV 格式的数据文件，文件中有两列，分别可以对应到目标 StarRocks 表的 `id` 和 `city` 两列。如果要实现把数据文件中第一列的数据乘以 100 以后再落入 StarRocks 表的转换，可以指定 `"columns: city,tmp_id, id = tmp_id * 100"`。具体请参见本文“[列映射](#列映射)”章节。 |
+| columns      | 否           | 指定源数据文件和 StarRocks 表之间的列对应关系。如果源数据文件中的列与 StarRocks 表中的列按顺序一一对应，则不需要指定 `columns` 参数。您可以通过 `columns` 参数实现数据转换。例如，要导入一个 CSV 格式的数据文件，文件中有两列，分别可以对应到目标 StarRocks 表的 `id` 和 `city` 两列。如果要实现把数据文件中第一列的数据乘以 100 以后再落入 StarRocks 表的转换，可以指定 `"columns: city,tmp_id, id = tmp_id * 100"`。具体请参见本文“[列映射](#列映射)”章节。 |
 
 #### CSV 适用参数
 
 | **参数名称**     | **是否必选** | **参数说明**                                                 |
 | ---------------- | ------------ | ------------------------------------------------------------ |
-| column_separator | 否           | 用于指定待导入数据文件中的列分隔符。如果不指定该参数，则默认为 `\t`，即 Tab。必须确保这里指定的列分隔符与待导入数据文件中的列分隔符一致。<br>**说明**<br>StarRocks 支持设置长度最大不超过 50 个字节的 UTF-8 编码字符串作为列分隔符，包括常见的逗号 (,)、Tab 和 Pipe (\|)。 |
-| row_delimiter    | 否           | 用于指定待导入数据文件中的行分隔符。如果不指定该参数，则默认为 `\n`。 |
+| column_separator | 否           | 用于指定源数据文件中的列分隔符。如果不指定该参数，则默认为 `\t`，即 Tab。必须确保这里指定的列分隔符与源数据文件中的列分隔符一致。<br>**说明**<br>StarRocks 支持设置长度最大不超过 50 个字节的 UTF-8 编码字符串作为列分隔符，包括常见的逗号 (,)、Tab 和 Pipe (\|)。 |
+| row_delimiter    | 否           | 用于指定源数据文件中的行分隔符。如果不指定该参数，则默认为 `\n`。 |
+
+> 说明
+>
+> 对于 CSV 格式的数据，需要注意以下两点：
+>
+> - StarRocks 支持设置长度最大不超过 50 个字节的 UTF-8 编码字符串作为列分隔符，包括常见的逗号 (,)、Tab 和 Pipe (|)。
+> - 空值 (null) 用 `\N` 表示。比如，数据文件一共有三列，其中某行数据的第一列、第三列数据分别为 `a` 和 `b`，第二列没有数据，则第二列需要用 `\N` 来表示空值，写作 `a,\N,b`，而不是 `a,,b`。`a,,b` 表示第二列是一个空字符串。
 
 #### JSON 适用参数
 
 | **参数名称**      | **是否必选** | **参数说明**                                                 |
 | ----------------- | ------------ | ------------------------------------------------------------ |
-| jsonpaths         | 否           | 用于指定待导入的字段的名称。参数取值为 JSON 格式。Stream Load 支持通过如下模式之一来导入 JSON 数据：<ul><li>简单模式：不需要设置 `jsonpaths` 参数。这种模式适用于 JSON 数据结构相对简单、不需要通过转换来实现 JSON 数据跟 StarRocks 表数据之间的映射的场景。要求 JSON 数据是大括号 {} 表示的对象类型，例如 `{"category": 1, "author": 2, "price": "3"}` 中，`category`、`author`、`price` 是字段的名称，按名称直接对应目标 StarRocks 表中的 `category`、`author`、`price` 三列。</li><li>匹配模式：需要设置 `jsonpaths` 参数。这种模式适用于 JSON 数据结构相对复杂、需要通过转换来实现 JSON 数据跟 StarRocks 表数据之间的映射的场景。具体请参见本文提供的示例 “[使用匹配模式导入数据](/sql-reference/sql-statements/data-manipulation/STREAM%20LOAD.md#使用匹配模式导入数据)。”</li></ul> |
+| jsonpaths         | 否           | 用于指定待导入的字段的名称。仅在使用匹配模式导入 JSON 数据时需要指定该参数。参数取值为 JSON 格式。参见[导入 JSON 数据时配置列映射关系](#导入-json-数据时配置列映射关系). |
 | strip_outer_array | 否           | 用于指定是否裁剪最外层的数组结构。取值范围：`true` 和 `false`。默认值：`false`。真实业务场景中，待导入的 JSON 数据可能在最外层有一对表示数组结构的中括号 `[]`。这种情况下，一般建议您指定该参数取值为 `true`，这样 StarRocks 会剪裁掉外层的中括号 `[]`，并把中括号 `[]` 里的每个内层数组都作为一行单独的数据导入。如果您指定该参数取值为 `false`，则 StarRocks 会把整个 JSON 数据文件解析成一个数组，并作为一行数据导入。例如，待导入的 JSON 数据为 `[ {"category" : 1, "author" : 2}, {"category" : 3, "author" : 4} ]`，如果指定该参数取值为 `true`，则 StarRocks 会把 `{"category" : 1, "author" : 2}` 和 `{"category" : 3, "author" : 4}` 解析成两行数据，并导入到目标 StarRocks 表中对应的数据行。 |
-| json_root         | 否           | 用于指定待导入 JSON 数据的根元素。该参数仅用于通过匹配模式导入 JSON 数据。参数取值为合法的 JsonPath 字符串。默认值为空，表示会导入整个 JSON 数据文件的数据。具体请参见本文提供的示例“[导入数据并指定 JSON 根元素](/sql-reference/sql-statements/data-manipulation/STREAM%20LOAD.md)。” |
+| json_root         | 否           | 用于指定待导入 JSON 数据的根元素。仅在使用匹配模式导入 JSON 数据时需要指定该参数。参数取值为合法的 JsonPath 字符串。默认值为空，表示会导入整个 JSON 数据文件的数据。具体请参见本文提供的示例“[导入数据并指定 JSON 根节点](#指定-json-根节点使匹配模式导入数据)”。 |
 | ignore_json_size | 否   | 用于指定是否检查 HTTP 请求中 JSON Body 的大小。<br>**说明**<br>HTTP 请求中 JSON Body 的大小默认不能超过 100 MB。如果 JSON Body 的大小超过 100 MB，会提示 "The size of this batch exceed the max size [104857600] of json type data data [8617627793]. Set ignore_json_size to skip check, although it may lead huge memory consuming." 错误。为避免该报错，可以在 HTTP 请求头中添加 `"ignore_json_size:true"` 设置，忽略对 JSON Body 大小的检查。 |
 
 另外，导入 JSON 格式的数据时，需要注意单个 JSON 对象的大小不能超过 4 GB。如果 JSON 文件中单个 JSON 对象的大小超过 4 GB，会提示 "This parser can't support a document that big." 错误。
@@ -120,7 +129,7 @@ http://<fe_host>:<fe_http_port>/api/<database_name>/<table_name>/_stream_load
 | where            | 否           | 用于指定过滤条件。如果指定该参数，StarRocks 会按照指定的过滤条件对转换后的数据进行过滤。只有符合 WHERE 子句中指定的过滤条件的数据才会导入。 |
 | max_filter_ratio | 否           | 用于指定导入作业的最大容错率，即导入作业能够容忍的因数据质量不合格而过滤掉的数据行所占的最大比例。取值范围：`0`~`1`。默认值：`0` 。<br>建议您保留默认值 `0`。这样的话，当导入的数据行中有错误时，导入作业会失败，从而保证数据的正确性。<br>如果希望忽略错误的数据行，可以设置该参数的取值大于 `0`。这样的话，即使导入的数据行中有错误，导入作业也能成功。<br>**说明**<br>这里因数据质量不合格而过滤掉的数据行，不包括通过 WHERE 子句过滤掉的数据行。 |
 | timeout          | 否           | 用于导入作业的超时时间。取值范围：1 ~ 259200。单位：秒。默认值：`600`。<br>**说明**<br>除了 `timeout` 参数可以控制该导入作业的超时时间外，您还可以通过 [FE 配置参数](../../../administration/Configuration.md#导入和导出相关动态参数) `stream_load_default_timeout_second` 来统一控制 Stream Load 导入作业的超时时间。如果指定了`timeout` 参数，则该导入作业的超时时间以 `timeout` 参数为准；如果没有指定 `timeout` 参数，则该导入作业的超时时间以`stream_load_default_timeout_second` 为准。 |
-| strict_mode      | 否           | 用于指定是否开启匹配模式。取值范围：`true` 和 `false`。默认值：`false`。`true` 表示开启，`false` 表示关闭。 |
+| strict_mode      | 否           | 用于指定是否开严格模式。取值范围：`true` 和 `false`。默认值：`false`。`true` 表示开启，`false` 表示关闭。<br>关于该模式的介绍，参见 [严格模式](../../../loading/load_concept/strict_mode.md)。|
 | timezone         | 否           | 用于指定导入作业所使用的时区。默认为东八区 (Asia/Shanghai)。<br>该参数的取值会影响所有导入涉及的、跟时区设置有关的函数所返回的结果。受时区影响的函数有 strftime、alignment_timestamp 和 from_unixtime 等，具体请参见[设置时区](../../../administration/timezone.md)。导入参数 `timezone` 设置的时区对应“[设置时区](../../../administration/timezone.md)”中所述的会话级时区。 |
 | load_mem_limit   | 否           | 导入作业的内存限制，最大不超过 BE 的内存限制。单位：字节。默认内存限制为 2 GB。 |
 
@@ -128,30 +137,33 @@ http://<fe_host>:<fe_http_port>/api/<database_name>/<table_name>/_stream_load
 
 ### 导入 CSV 数据时配置列映射关系
 
-在导入 CSV 格式的数据时，只需要通过 `columns` 参数来指定待导入数据文件和 StarRocks 表之间的列映射关系。如果待导入数据文件中的列与 StarRocks 表中的列按顺序一一对应，则不需要指定该参数；否则，必须通过该参数来配置列映射关系，一般包括如下两种场景：
+如果源数据文件中的列与目标表中的列按顺序一一对应，您不需要指定列映射和转换关系。
 
-- 待导入数据文件中的列与 StarRocks 表中的列一一对应，并且数据不需要通过函数计算、可以直接落入 StarRocks 表中对应的列。
+如果源数据文件中的列与目标表中的列不能按顺序一一对应，包括数量或顺序不一致，则必须通过 `COLUMNS` 参数来指定列映射和转换关系。一般包括如下两种场景：
 
-  您需要在 `columns` 参数中按照待导入数据文件中的列顺序、使用 StarRocks 表中对应的列名来配置列映射关系。
+- **列数量一致、但是顺序不一致，并且数据不需要通过函数计算、可以直接落入目标表中对应的列。** 这种场景下，您需要在 `COLUMNS` 参数中按照源数据文件中的列顺序、使用目标表中对应的列名来配置列映射和转换关系。
 
-  例如，StarRocks 表中有三列，按顺序依次为 `col1`、`col2` 和 `col3`；待导入数据文件中也有三列，按顺序依次对应 StarRocks 表中的 `col3`、`col2` 和 `col1`。这种情况下，需要指定 `"columns: col3, col2, col1"`。
+  例如，目标表中有三列，按顺序依次为 `col1`、`col2` 和 `col3`；源数据文件中也有三列，按顺序依次对应目标表中的 `col3`、`col2` 和 `col1`。这种情况下，需要指定 `COLUMNS(col3, col2, col1)`。
 
-- 待导入数据文件中的列与 StarRocks 表中的列不一一对应，或者某些列的数据需要通过函数计算以后才能落入 StarRocks 表中对应的列。
+- **列数量、顺序都不一致，并且某些列的数据需要通过函数计算以后才能落入目标表中对应的列。** 这种场景下，您不仅需要在 `COLUMNS` 参数中按照源数据文件中的列顺序、使用目标表中对应的列名来配置列映射关系，还需要指定参与数据计算的函数。以下为两个示例：
 
-  您不仅需要在 `columns` 参数中按照待导入数据文件中的列顺序、使用 StarRocks 表中对应的列名来配置列映射关系，还需要指定参与数据计算的函数。以下为两个示例：
+  - 目标表中有三列，按顺序依次为 `col1`、`col2` 和 `col3` ；源数据文件中有四列，前三列按顺序依次对应目标表中的 `col1`、`col2` 和 `col3`，第四列在目标表中无对应的列。这种情况下，需要指定 `COLUMNS(col1, col2, col3, temp)`，其中，最后一列可随意指定一个名称（如 `temp`）用于占位即可。
+  - 目标表中有三列，按顺序依次为 `year`、`month` 和 `day`。源数据文件中只有一个包含时间数据的列，格式为 `yyyy-mm-dd hh:mm:ss`。这种情况下，可以指定 `COLUMNS (col, year = year(col), month=month(col), day=day(col))`。其中，`col` 是源数据文件中所包含的列的临时命名，`year = year(col)`、`month=month(col)` 和 `day=day(col)` 用于指定从 `col` 列提取对应的数据并落入目标表中对应的列，如 `year = year(col)` 表示通过 `year` 函数提取源数据文件中 `col` 列的 `yyyy` 部分的数据并落入目标表中的 `year` 列。
 
-  - StarRocks 表中有三列，按顺序依次为 `col1`、`col2` 和 `col3` ；待导入数据文件中有四列，前三列按顺序依次对应 StarRocks 表中的 `col1`、`col2` 和 `col3`，第四列在 StarRocks 表中无对应的列。这种情况下，需要指定 `"columns: col1, col2, col3, temp"`，其中，最后一列可随意指定一个名称（如 `temp`）用于占位即可。
-  - StarRocks 表中有三列，按顺序依次为 `year`、`month` 和 `day`。待导入数据文件中只有一个包含时间数据的列，格式为 `yyyy-mm-dd hh:mm:ss`。这种情况下，可以指定 `"columns: col, year = year(col), month=month(col), day=day(col)"`。其中，`col` 是待导入数据文件中所包含的列的临时命名，`year = year(col)`、`month=month(col)` 和 `day=day(col)` 用于指定从待导入数据文件中的 `col` 列提取对应的数据并落入 StarRocks 表中对应的列，如 `year = year(col)` 表示通过 `year` 函数提取待导入数据文件中 `col` 列的 `yyyy` 部分的数据并落入 StarRocks 表中的 `year` 列。
+有关操作示例，参见[设置列映射关系](#设置列映射关系)。
 
 ### 导入 JSON 数据时配置列映射关系
 
-在导入 JSON 格式的数据时，需要通过 `jsonpaths` 和 `columns` 两个参数来指定待导入数据文件和 StarRocks 表之间的列映射关系：
+如果 JSON 文件中的 Key 名与目标表中的列名一致，您可以使用简单模式来导入数据。简单模式下，不需要设置 `jsonpaths` 参数，这种模式要求 JSON 数据是大括号 {} 表示的对象类型，例如 `{"category": 1, "author": 2, "price": "3"}` 中，`category`、`author`、`price` 是 Key 的名称，按名称直接对应目标 表中的 `category`、`author`、`price` 三列。
 
-- `jsonpaths` 参数中声明的字段与待导入数据文件中的字段**按名称**保持一一对应。
+如果 JSON 文件中的 Key 名与目标表中的列名不一致，则需要使用匹配模式来导入数据。匹配模式下，需要通过 `jsonpaths` 和 `COLUMNS` 两个参数来指定 JSON 文件中的 Key 和目标表中的列之间的映射和转换关系：
 
-- `columns` 中声明的列与 `jsonpaths` 中声明的字段**按顺序**保持一一对应。
+- `jsonpaths` 参数中按照 JSON 文件中 Key 的顺序一一指定待导入的 Key。
+- `COLUMNS` 参数中指定 JSON 文件中的 Key 与目标表中的列之间的映射关系和数据转换关系。
+  - `COLUMNS` 参数中指定的列名与 `jsonpaths` 参数中指定的 Key 按顺序保持一一对应。
+  - `COLUMNS` 参数中指定的列名与目标表中的列按名称保持一一对应。
 
-- `columns` 参数中声明的列与 StarRocks 表中的列**按名称**保持一一对应。
+有关使用匹配模式导入 JSON 数据的示例，参见[使用匹配模式导入数据](#使用匹配模式导入数据)。
 
 ## 返回值
 
@@ -248,7 +260,7 @@ StarRocks 数据库 `test_db` 里的表 `table2` 包含三列，按顺序依次�
 如果要把 `example2.csv` 中所有的数据都导入到 `table2` 中，并且要求容错率最大不超过 `0.2`，可以执行如下命令：
 
 ```Bash
-curl --location-trusted -u root: -H "label:label3" \
+curl --location-trusted -u root: -H "label:label2" \
     -H "max_filter_ratio:0.2" \
     -T example2.csv -XPUT \
     http://<fe_host>:<fe_http_port>/api/test_db/table2/_stream_load
@@ -263,7 +275,7 @@ StarRocks 数据库 `test_db` 里的表 `table3` 包含三列，按顺序依次�
 如果要把 `example3.csv` 中所有的数据都导入到 `table3` 中，可以执行如下命令：
 
 ```Bash
-curl --location-trusted -u root:  -H "label:label4" \
+curl --location-trusted -u root:  -H "label:label3" \
     -H "columns: col2, col1, col3" \
     -T example3.csv -XPUT \
     http://<fe_host>:<fe_http_port>/api/test_db/table3/_stream_load
@@ -282,7 +294,7 @@ StarRocks 数据库 `test_db` 里的表 `table4` 包含三列，按顺序依次�
 如果只想把 `example4.csv` 中第一列的值等于 `20180601` 的数据行导入到 `table4` 中，可以执行如下命令：
 
 ```Bash
-curl --location-trusted -u root: -H "label:label2" \
+curl --location-trusted -u root: -H "label:label4" \
     -H "columns: col1, col2，col3]"\
     -H "where: col1 = 20180601" \
     -T example4.csv -XPUT \
@@ -308,13 +320,13 @@ curl --location-trusted -u root:  -H "label:label5" \
     http://<fe_host>:<fe_http_port>/api/test_db/table5/_stream_load
 ```
 
-#### **设置匹配模式和时区**
+#### **设置严格模式和时区**
 
 StarRocks 数据库 `test_db` 里的表 `table6` 包含三列，按顺序依次为 `col1`、`col2`、`col3`。
 
 数据文件 `example6.csv` 也包含三列，按顺序一一对应 `table6` 中的三列 `col1`、`col2`、`col3`。
 
-如果要把 `example6.csv` 中所有的数据导入到 `table6` 中，并且要求进行匹配模式的过滤、使用时区 `Africa/Abidjan`，可以执行如下命令：
+如果要把 `example6.csv` 中所有的数据导入到 `table6` 中，并且要求进严格模式的过滤、使用时区 `Africa/Abidjan`，可以执行如下命令：
 
 ```Bash
 curl --location-trusted -u root: \
@@ -345,9 +357,9 @@ curl --location-trusted -u root: \
 >
 > - 使用 `hll_hash` 函数把 `example7.csv` 中的 `temp1` 列转换成 HLL 类型的数据并映射到 `table7`中的 `col1` 列。
 >
-> - 使用 `empty_hll` 函数给导入的数据行在 `table7` 中的第二列补充默认值。
+> - 使用 `hll_empty` 函数给导入的数据行在 `table7` 中的第二列补充默认值。
 
-有关 `hll_hash` 函数和 `hll_empty` 函数的用法，请参见 [HLL](../data-definition/HLL.md)。
+有关 `hll_hash` 函数和 `hll_empty` 函数的用法，请参见 [hll_hash](../../sql-functions/aggregate-functions/hll_hash.md) 和 [hll_empty](../../sql-functions/aggregate-functions/hll_empty.md)。
 
 #### **导入数据到含有 BITMAP 类型列的表**
 
@@ -436,7 +448,7 @@ StarRocks 按照如下顺序对数据进行匹配和处理：
 
 3. 根据 `jsonpaths` 参数提取待导入的 JSON 数据。
 
-##### **不指定 JSON 根节点、使用匹配模式导入数据**
+##### **不指定 JSON 根节点、使匹配模式导入数据**
 
 假设数据文件 `example2.json` 包含如下数据：
 
@@ -464,7 +476,7 @@ curl --location-trusted -u root: -H "label:label7" \
 >
 > 上述示例中，JSON 数据的最外层是一个通过中括号 [] 表示的数组结构，并且数组结构中的每个 JSON 对象都表示一条数据记录。因此，需要设置 `strip_outer_array` 为 `true`来裁剪最外层的数组结构。导入过程中，未指定的字段 `title` 会被忽略掉。
 
-##### **指定 JSON 根节点、使用匹配模式导入数据**
+##### **指定 JSON 根节点、使匹配模式导入数据**
 
 假设数据文件 `example3.json` 包含如下数据：
 

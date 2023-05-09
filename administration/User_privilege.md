@@ -31,12 +31,12 @@ CREATE USER user_identity [auth_option] [DEFAULT ROLE 'role_name'];
 ```sql
 -- 创建一个无密码用户，且不指定 host。
 CREATE USER 'jack';
--- 使用明文密码创建用户，允许其从 '172.10.1.10' 登录。
-CREATE USER jack@'172.10.1.10' IDENTIFIED WITH mysql_native_password BY '123456';
+-- 使用明文密码创建用户，允许其从 '172.16.1.10' 登录。
+CREATE USER jack@'172.16.1.10' IDENTIFIED WITH mysql_native_password BY '123456';
 -- 使用暗文密码创建用户。
-CREATE USER jack@'172.10.1.10' IDENTIFIED BY PASSWORD '*6BB4837EB74329105EE4568DDA7DC67ED2CA2AD9';
+CREATE USER jack@'172.16.1.10' IDENTIFIED BY PASSWORD '*6BB4837EB74329105EE4568DDA7DC67ED2CA2AD9';
 -- 创建一个 LDAP 认证的用户，并指定用户在 LDAP 中的 Distinguished Name (DN)。
-CREATE USER jack@'172.10.1.10' IDENTIFIED WITH authentication_ldap_simple AS 'uid=jack,ou=company,dc=example,dc=com';
+CREATE USER jack@'172.16.1.10' IDENTIFIED WITH authentication_ldap_simple AS 'uid=jack,ou=company,dc=example,dc=com';
 -- 创建一个允许从 '192.168' 子网登录的用户，同时指定其角色为 example_role。
 CREATE USER 'jack'@'192.168.%' DEFAULT ROLE 'example_role';
 -- 创建一个允许从域名 'example_domain' 登录的用户。
@@ -44,13 +44,13 @@ CREATE USER 'jack'@['example_domain'] IDENTIFIED BY '12345';
 ```
 
 > 说明
-> 您可以通过 `PASSWORD()` 方法获得暗文密码。
+> 您可以通过 `PASSWORD()` 方法获得密文密码。
 
 ## 修改用户密码
 
 通过以下命令修改用户登录密码。
 
-> 注意
+> **注意**
 >
 > * 拥有 ADMIN 权限，或者 GLOBAL 层级 GRANT 权限的用户，可以设置任意用户的密码。
 > * 普通用户可以设置自己对应的 User Identity 的密码。自己对应的 User Identity 可以通过 SELECT CURRENT_USER(); 命令查看。
@@ -72,14 +72,63 @@ SET PASSWORD FOR 'jack'@'192.%' = PASSWORD('123456')
 SET PASSWORD FOR 'jack'@['domain'] = '*6BB4837EB74329105EE4568DDA7DC67ED2CA2AD9'
 ```
 
-> 说明
+> **说明**
+>
 > 您可以通过 `PASSWORD()` 方法获得暗文密码。
+
+### 修改 root 用户密码
+
+如果您忘记 `root` 用户密码，您可以通过以下步骤重置密码：
+
+1. 在**所有 FE 节点**的配置文件 **fe/conf/fe.conf** 中添加以下配置项以关闭 FE 鉴权：
+
+    ```plain
+    enable_auth_check = false
+    ```
+
+2. 重启**所有 FE 节点**。
+
+    ```shell
+    ./fe/bin/stop_fe.sh
+    ./fe/bin/start_fe.sh
+    ```
+
+3. 通过 MySQL 客户端登录 `root` 用户，无需密码。
+
+    ```shell
+    mysql -h <fe_ip> -P<fe_query_port> -uroot
+    ```
+
+4. 修改 `root` 用户密码。
+
+    ```sql
+    SET PASSWORD for root = PASSWORD('xxxxxx');
+    ```
+
+5. 在**所有 FE 节点**的配置文件 **fe/conf/fe.conf** 中修改配置项 `enable_auth_check` 为 `true` 以重新开启 FE 鉴权。
+
+    ```plain
+    enable_auth_check = true
+    ```
+
+6. 重启**所有 FE 节点**。
+
+    ```shell
+    ./fe/bin/stop_fe.sh
+    ./fe/bin/start_fe.sh
+    ```
+
+7. 通过 MySQL 客户端登录 `root` 用户验证密码是否修改成功。
+
+    ```shell
+    mysql -h <fe_ip> -P<fe_query_port> -uroot -p<xxxxxx>
+    ```
 
 ## 删除用户
 
 通过以下命令删除 StarRocks 用户。
 
-> 注意
+> **注意**
 >
 > 拥有 ADMIN 权限的用户可以删除用户。
 
@@ -109,7 +158,7 @@ GRANT privilege_list ON RESOURCE resource_name TO user_identity [ROLE role_name]
 参数：
 
 * `privilege_list`：需要赋予的权限列表，以逗号分隔。
-  * NODE_PRIV：节点变更权限。包括 FE、BE、BROKER 节点的添加、删除、下线等操作。目前该权限只能授予 Root 用户。
+  * NODE_PRIV：节点变更权限。包括 FE、BE、BROKER 节点的添加、删除、下线等操作。目前该权限只能授予 root 用户。
   * GRANT_PRIV：权限变更权限。允许执行包括授权、撤权、添加/删除/变更 用户/角色等操作。
   * SELECT_PRIV：对数据库、表的只读权限。
   * LOAD_PRIV：对数据库、表的写权限。包括 LOAD、INSERT、DELETE 等。
@@ -378,13 +427,13 @@ StarRocks 初始化时，会自动创建如下角色和用户：
 
 这里列举一些 StarRocks 权限系统的使用场景。
 
-### 场景一 权限分配
+### 场景一：权限分配
 
 StarRocks 集群的使用者分为管理员（Admin）、开发工程师（RD）和用户（Client）。其中管理员拥有整个集群的所有权限，主要负责集群的搭建、节点管理等。开发工程师负责业务建模，包括建库建表、数据的导入和修改等。用户访问不同的数据库和表来获取数据。
 
 在这种场景下，可以为管理员赋予 ADMIN 权限或 GRANT 权限。对 RD 赋予对任意或指定数据库表的 CREATE、DROP、ALTER、LOAD、SELECT 权限。对 Client 赋予对任意或指定数据库表 SELECT 权限。同时，也可以通过创建不同的角色，来简化对多个用户的授权操作。
 
-### 场景二 多业务线
+### 场景二：多业务线
 
 一个集群内有多个业务，每个业务可能使用一个或多个数据。每个业务需要管理自己的用户。在这种场景下，管理员用户可以为每个数据库创建一个拥有 DATABASE 层级 GRANT 权限的用户。该用户仅可以对用户进行指定的数据库的授权。
 

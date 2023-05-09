@@ -4,11 +4,7 @@
 
 ## 导入数据
 
-为适配不同的数据导入需求，StarRocks 系统提供了五种不同的导入方式，以支持从不同的数据源（如 HDFS、Kafka、本地文件等）或者方式（异步或同步）导入数据。
-
-StarRocks 数据导入整体生态图如下。
-
-![starrocks_ecology](../assets/screenshot_1615530614737.png)
+为适配不同的数据导入需求，StarRocks 系统提供了五种不同的导入方式，以支持不同的数据源或者导入方式。
 
 ### Broker Load
 
@@ -63,7 +59,7 @@ http://127.0.0.1:8030/api/example_db/detailDemo/_stream_load
 
 ## 查询
 
-StarRocks 兼容 MySQL 协议，其查询语句基本符合 SQL92 标准。
+StarRocks 兼容 MySQL 协议，其查询语句基本符合 SQL-92 标准。
 
 ### 简单查询
 
@@ -90,7 +86,7 @@ StarRocks 拓展支持多种函数、视图、以及外部表。
 
 ### 函数
 
-StarRocks 中支持多种函数，包括：[日期函数](/sql-reference/sql-functions/date-time-functions/convert_tz.md)，[地理位置函数](/sql-reference/sql-functions/spatial-functions/st_astext.md)，[字符串函数](/sql-reference/sql-functions/string-functions/append_trailing_char_if_absent.md)，[聚合函数](/sql-reference/sql-functions/aggregate-functions/approx_count_distinct.md)，[Bitmap 函数](/sql-reference/sql-functions/bitmap-functions/bitmap_and.md)，[数组函数](/sql-reference/sql-functions/array-functions/array_append.md)，[cast 函数](/sql-reference/sql-functions/cast.md)，[hash 函数](/sql-reference/sql-functions/hash-functions/murmur_hash3_32.md)，[加密函数](/sql-reference/sql-functions/encryption-functions/md5.md)，[窗口函数](/sql-reference/sql-functions/Window_function.md) 等。
+StarRocks 中支持多种函数，包括：[日期函数](/sql-reference/sql-functions/date-time-functions/convert_tz.md)，[地理位置函数](/sql-reference/sql-functions/spatial-functions/st_astext.md)，[字符串函数](/sql-reference/sql-functions/string-functions/append_trailing_char_if_absent.md)，[聚合函数](/sql-reference/sql-functions/aggregate-functions/approx_count_distinct.md)，[Bitmap 函数](/sql-reference/sql-functions/bitmap-functions/bitmap_and.md)，[数组函数](/sql-reference/sql-functions/array-functions/array_append.md)，[cast 函数](/sql-reference/sql-functions/cast.md)，[hash 函数](/sql-reference/sql-functions/hash-functions/murmur_hash3_32.md)，[加密函数](/sql-reference/sql-functions/crytographic-functions/md5.md)，[窗口函数](/sql-reference/sql-functions/Window_function.md) 等。
 
 ### 视图
 
@@ -106,7 +102,7 @@ StarRocks 支持通过多种方式分析查询瓶颈以及优化查询效率。
 
 ### 通过调整并行度优化查询效率
 
-我们推荐您通过设置 Pipeline 执行引擎变量。您也可以通过调整一个 [Fragment](/introduction/features.md#mpp分布式执行框架) 实例的并行数量 `set  parallel_fragment_exec_instance_num = 8;` 来设置查询并行度，从而提高 CPU 资源利用率和查询效率。详细的参数介绍及设置，参考 [查询并行度相关参数](/administration/Query_management.md)。
+我们推荐您通过设置 Pipeline 执行引擎变量。您也可以通过调整一个 [Fragment](/introduction/Features.md#mpp分布式执行框架) 实例的并行数量 `set  parallel_fragment_exec_instance_num = 8;` 来设置查询并行度，从而提高 CPU 资源利用率和查询效率。详细的参数介绍及设置，参考 [查询并行度相关参数](/administration/Query_management.md)。
 
 ### 查看 Profile 并分析查询瓶颈
 

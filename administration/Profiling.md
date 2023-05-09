@@ -80,7 +80,7 @@ StarRocks 支持四种数据模型：主键模型 (PRIMARY KEY)，聚合模型 (
         state tinyint NOT NULL
     )
     PRIMARY KEY (dt, order_id)
-    DISTRIBUTED BY HASH(order_id) BUCKETS 4
+    DISTRIBUTED BY HASH(order_id) BUCKETS 4;
     ```
 
 ### 使用内存表
@@ -131,7 +131,7 @@ PROPERTIES(
 
 ### 使用星型模型
 
-StarRocks 支持选择更灵活的星型模型来替代传统建模方式的大宽表。通过星型模型，您可以用一个视图来取代宽表进行建模，直接使用多表关联来查询。在 SSB 的标准测试集的对比中，StarRocks 的多表关联性能相较于单表查询并无明显下降。
+StarRocks 支持选择更灵活的星型模型 (star schema) 来替代传统建模方式的大宽表。通过星型模型，您可以用一个视图来取代宽表进行建模，直接使用多表关联来查询。在 SSB 的标准测试集的对比中，StarRocks 的多表关联性能相较于单表查询并无明显下降。
 
 相比星型模型，宽表的缺点包括：
 
@@ -154,12 +154,12 @@ RANGE 分区用于将数据划分成不同区间，逻辑上等同于将原始�
 HASH 分桶指根据 Hash 值将数据划分成不同的 Bucket。
 
 * 建议采用区分度大的列做分桶，避免出现数据倾斜。
-* 为方便数据恢复，建议单个 Bucket 保持较小的 Size，应保证其中数据压缩后大小保持在 100M 至 1GB 左右。建议您在建表或增加分区时合理考虑 Bucket 数目，其中不同分区可指定不同的 Bucket 数量。
+* 为方便数据恢复，建议单个 Bucket 保持较小的 Size，应保证其中数据压缩后大小保持在 100MB 至 1GB 左右。建议您在建表或增加分区时合理考虑 Bucket 数目，其中不同分区可指定不同的 Bucket 数量。
 * 不建议采用 Random 分桶方式。建表时，请指定明确的 Hash 分桶列。
 
 ### 使用稀疏索引和 Bloomfilter
 
-StarRocks 支持对数据进行有序存储，在数据有序的基础上为其建立稀疏索引，索引粒度为 Block（1024行）。
+StarRocks 支持对数据进行有序存储，在数据有序的基础上为其建立稀疏索引，索引粒度为 Block（1024 行）。
 
 稀疏索引选取 Schema 中固定长度的前缀作为索引内容，目前 StarRocks 选取 36 个字节的前缀作为索引。
 

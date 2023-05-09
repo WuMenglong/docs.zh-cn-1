@@ -1,6 +1,6 @@
 # 部署 CN 节点 【公测中】
 
-CN 节点（Compute Node）是一种无状态的计算服务，自身不维护数据，可以承担部分 SQL 计算。本文介绍如何配置部署一个 CN 节点。您可以通过重复以下步骤添加多个 CN 节点。  
+自 2.4 版本起，StarRocks 在 FE 、BE 节点基础上，提供了一种新的计算节点（Compute Node，以下简称 CN）。CN 节点（Compute Node）是一种无状态的计算服务，自身不维护数据，可以承担部分 SQL 计算。本文介绍如何配置部署一个 CN 节点。您可以通过重复以下步骤添加多个 CN 节点。
 
 ## 工作原理
 
@@ -14,7 +14,7 @@ SQL 语句在 StarRocks 中的生命周期可以分为查询解析、规划、�
 
 ## 下载并解压安装包
 
-[下载](https://www.starrocks.com/zh-CN/download) StarRocks 并解压二进制安装包。
+[下载](https://www.mirrorship.cn/zh-CN/download/community) StarRocks 并解压二进制安装包。
 
 ```bash
 tar -xzvf StarRocks-x.x.x.tar.gz

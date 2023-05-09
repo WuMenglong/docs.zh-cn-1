@@ -31,8 +31,6 @@ PROPERTIES (
 );
 ```
 
-> 目前 JSON 类型的列仅支持存在于明细模型的表中，且该列不允许为排序键。
-
 ### 导入数据并存储为 JSON 类型
 
 StarRocks 支持如下三种方式导入数据并存储为 JSON 类型。
@@ -46,11 +44,12 @@ INSERT INTO tj (id, j) VALUES (3, parse_json('{"a": 3, "b": true}'));
 INSERT INTO tj (id, j) VALUES (4, json_object('a', 4, 'b', false)); 
 ```
 
-> PARSE_JSON 函数能够基于字符串类型的数据构造出 JSON 类型的数据。JSON_OBJECT 函数能够构造出 JSON 对象类型的数据，可以将现有的表转成 JSON 类型。更多说明，请参见 [PARSE_JSON](../../sql-functions/json-functions/json-creation-functions/parse_json.md) 和 [JSON_OBJECT](../../sql-functions/json-functions/json-creation-functions/json_object.md)。
+> PARSE_JSON 函数能够基于字符串类型的数据构造出 JSON 类型的数据。JSON_OBJECT 函数能够构造出 JSON 对象类型的数据，可以将现有的表转成 JSON 类型。更多说明，请参见 [PARSE_JSON](../../sql-functions/json-functions/json-constructor-functions/parse_json.md) 和 [JSON_OBJECT](../../sql-functions/json-functions/json-constructor-functions/json_object.md)。
 
-- 方式二：通过 Stream Load 的方式导入 JSON 文件并存储为 JSON 类型。导入方法请参见 [导入 JSON 数据](../../../loading/StreamLoad.md)。
-  - 如果需要将 JSON 文件中一个 JSON 对象的指定值导入并存储为 JSON 类型，则您需要设置 `jsonpaths` 为$.a（a 代表指定键）。
-  - 如果需要将 JSON 文件中的一个 JSON 对象导入并存储为 JSON 类型，则您需要设置 `jsonpaths` 为 $。
+- 方式二：通过 Stream Load 的方式导入 JSON 文件并存储为 JSON 类型。导入方法请参见 [导入 JSON 数据](../../../loading/StreamLoad.md#导入-json-格式的数据)。
+  - 如果需要将 JSON 文件中根节点的 JSON 对象导入并存储为 JSON 类型，可设置 `jsonpaths` 为 `$`。
+  - 如果需要将 JSON 文件中一个 JSON 对象的值 (value) 导入并存储为 JSON 类型，可设置 `jsonpaths` 为 `$.a`（a 代表 key）。更多 JSON 路径表达式，参见 [JSON path](../../sql-functions/json-functions/overview-of-json-functions-and-operators.md#json-path)。
+  
 - 方式三：通过 Broker Load 的方式导入 Parquet 文件并存储为 JSON 类型。导入方式，请参见 [Broker Load](../../../loading/BrokerLoad.md)。
 
 导入时支持数据类型转换如下：
@@ -101,11 +100,7 @@ mysql> select * from tj where id = 1;
 
 ```Plain Text
 mysql> select * from tj where j->'a' = parse_json('1');
-+------+---------------------+
-|   id |         j           |
-+------+---------------------+
-|   1  | {"a": 1, "b": true} |
-+------+---------------------+
+Empty set (0.05 sec)
 
 mysql> select * from tj where cast(j->'a' as INT) = 1; 
 +------+---------------------+
@@ -153,22 +148,23 @@ mysql> select * from tj
        where j->'a' <= parse_json('3')
        order by cast(j->'a' as int);
 +------+----------------------+
-| id   |           j          |
+| id   | j                    |
 +------+----------------------+
-|  1   | {"a": 1, "b": true}  |
-|  2   | {"a": 2, "b": false} |
-|  3   | {"a": 3, "b": true}  |
+|    1 | {"a": 1, "b": true}  |
+|    2 | {"a": 2, "b": false} |
+|    3 | {"a": 3, "b": true}  |
+|    4 | {"a": 4, "b": false} |
 +------+----------------------+
 ```
 
 ## JSON 函数和运算符
 
-JSON 函数和运算符可以用于构造和处理 JSON 数据。具体说明，请参见 [JSON 函数和运算符](../../sql-functions/json-functions/json-functions-and-operators.md)。
+JSON 函数和运算符可以用于构造和处理 JSON 数据。具体说明，请参见 [JSON 函数和运算符](../../sql-functions/json-functions/overview-of-json-functions-and-operators.md)。
 
 ## 限制和注意事项
 
 - 当前 JSON 类型的数据最大长度和字符串类型相同。
-- ORDER BY、GROUP BY、JOIN 子句不支持引用 JSON 类型的列。如果需要引用，您可以提前使用 CAST 函数，将 JSON 类型的列转为其他 SQL 类型。具体转换方式，请参见 [JSON 类型转换](../../sql-functions/json-functions/json-processing-functions/cast-from-or-to-json.md)。
+- ORDER BY、GROUP BY、JOIN 子句不支持引用 JSON 类型的列。如果需要引用，您可以提前使用 CAST 函数，将 JSON 类型的列转为其他 SQL 类型。具体转换方式，请参见 [JSON 类型转换](../../sql-functions/json-functions/json-query-and-processing-functions/cast-from-or-to-json.md)。
 - 支持 JSON 类型的列存在于明细模型、主键模型、更新模型的表中，但不支持存在于聚合模型的表中。
 - 暂不支持 JSON 类型的列作为分区键、分桶键、维度列（DUPLICATE KEY、PRIMARY KEY、UNIQUE KEY），并且不支持用于 JOIN、GROUP BY、ORDER BY 子句。
 - StarRocks 支持使用 `<`，`<=`，`>`，`>=`， `=`，`!=` 运算符查询 JSON 数据，不支持使用 IN 运算符。

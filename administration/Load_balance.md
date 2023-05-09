@@ -4,14 +4,14 @@
 
 ## 通过代码均衡负载
 
-您可以在应用层代码进行重试和负载均衡。当特定连接宕机，代码应控制系统自动在其他连接上进行重试。使用该方式，您需要配置多个 StarRocks 前端节点地址。
+您可以在应用层代码进行重试和负载均衡 (Load Balance)。当特定连接宕机，代码应控制系统自动在其他连接上进行重试。使用该方式，您需要配置多个 StarRocks 前端节点地址。
 
 ## 通过 JDBC Connector 均衡负载
 
 如果您使用 MySQL JDBC Connector 连接 StarRocks，可以通过 JDBC 的自动重试机制进行重试和负载均衡。
 
 ```sql
-jdbc:mysql://[host:port],[host:port].../[database][?propertyName1][=propertyValue1][&propertyName2][=propertyValue2]...
+jdbc:mysql:loadbalance://[host1][:port],[host2][:port][,[host3][:port]]...[/[database]][?propertyName1=propertyValue1[&propertyName2=propertyValue2]...]
 ```
 
 ## 通过 ProxySQL 均衡负载

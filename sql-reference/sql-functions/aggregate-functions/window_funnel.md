@@ -2,7 +2,7 @@
 
 ## 功能
 
-搜索滑动时间窗口内的事件列表，计算条件匹配的事件链里的最大连续事件数。该函数是比较常见的转化分析方法，用于分析用户在各阶段行为的转化率。
+搜索滑动时间窗口内的事件列表，计算条件匹配的事件链里的最大连续事件数。该函数是一种漏斗函数，是比较常见的转化分析方法，用于分析用户在各阶段行为的转化率。
 
 该函数遵循如下规则：
 
@@ -72,8 +72,13 @@ mysql> select * from action;
 执行如下SQL语句计算最大连续事件数：
 
 ```Plaintext
-mysql> select uid, window_funnel(1800,time,0,[event_type='浏览', event_type='点击', 
-        event_type='下单', event_type='支付']) AS level from action group by uid order by uid; 
+SELECT uid,
+       window_funnel(1800,time,0,[event_type='浏览', event_type='点击', 
+        event_type='下单', event_type='支付'])
+        AS level
+FROM action
+GROUP BY uid
+ORDER BY uid; 
 +------+-------+
 | uid  | level |
 +------+-------+
@@ -123,8 +128,14 @@ mysql> select * from action1 order by time;
 执行如下SQL语句计算最大连续事件数：
 
 ```Plaintext
-mysql> select uid, window_funnel(1800,time,0,[event_type='浏览', 
-        event_type='点击', event_type='下单', event_type='支付']) AS level from action1 group by uid order by uid;
+SELECT uid,
+       window_funnel(1800,time,0,[event_type='浏览', 
+        event_type='点击', event_type='下单', event_type='支付'])
+        AS level
+FROM action1
+GROUP BY uid
+ORDER BY uid;
+
 +------+-------+
 | uid  | level |
 +------+-------+
@@ -171,8 +182,13 @@ mysql> select * from action2 order by time;
 执行如下SQL语句：
 
 ```Plaintext
-mysql> select uid, window_funnel(1900,time,0,[event_type='浏览', event_type='点击', 
-        event_type='下单', event_type='支付']) AS level from action2 group by uid order by uid;
+SELECT uid,
+       window_funnel(1900,time,0,[event_type='浏览', event_type='点击', 
+        event_type='下单', event_type='支付'])
+        AS level
+FROM action2
+GROUP BY uid
+ORDER BY uid;
 +------+-------+
 | uid  | level |
 +------+-------+
@@ -187,8 +203,13 @@ mysql> select uid, window_funnel(1900,time,0,[event_type='浏览', event_type='�
 将`mode`改为`2`，再次执行SQL：
 
 ```Plaintext
-mysql> select uid, window_funnel(1900,time,2,[event_type='浏览', event_type='点击', 
-        event_type='下单', event_type='支付']) AS level from action2 group by uid order by uid;
+SELECT uid,
+       window_funnel(1900,time,2,[event_type='浏览', event_type='点击', 
+        event_type='下单', event_type='支付'])
+        AS level
+FROM action2
+GROUP BY uid
+ORDER BY uid;
 +------+-------+
 | uid  | level |
 +------+-------+
@@ -199,3 +220,7 @@ mysql> select uid, window_funnel(1900,time,2,[event_type='浏览', event_type='�
 ```
 
 输出为`2`，因为“支付”事件跳跃，停止计数，此时筛选出的最大事件链是“浏览-点击”。
+
+## Keywords
+
+漏斗函数，漏斗，funnel，转化率

@@ -6,11 +6,9 @@
 
 该参数表示单个 schema change 任务允许占用的最大内存，默认大小 2G。修改完成后，需重启 BE 使配置生效。
 
-## StarRocks 对结果缓存有限制吗？
+## StarRocks 会缓存查询结果吗？
 
-StarRocks 不会对结果缓存，第一次查询慢、后面快的原因是后续的查询使用了操作系统的 pagecache。
-
-可以通过设置 `be.conf` 中`storage_page_cache_limit`参数来限制 pagecache，默认 20G。修改完成后，需重启 BE 使配置生效。
+StarRocks 不直接缓存查询结果。而是使用 Page Cache 将原始数据分成 page 缓存在 BE 内存上，后续查询同一个 page 时，可以直接使用 cache 中的数据。2.4 版本及以后默认开启 Page Cache。您可以通过设置 `be.conf` 中的 `storage_page_cache_limit` 来限制 page cache 的大小，默认为系统内存的 20%。修改完成后，需重启 BE 使配置生效。
 
 ## 当字段为NULL时，除了is null， 其他所有的计算结果都是false
 
@@ -213,3 +211,11 @@ StarRocks 使用 keyword 数据类型对该查询语句进行转换。因为该�
                 }
 
 让其使用 text 类型即可。
+
+## 如何快速统计 StarRocks 库、表的大小，所占的磁盘资源？
+
+查看库、表的存储大小可以用 [SHOW DATA](../sql-reference/sql-statements/data-manipulation/SHOW%20DATA.md) 命令查看。
+
+`SHOW DATA;` 可以展示当前数据库下所有表的数据量和副本数。
+
+`SHOW DATA FROM <db_name>.<table_name>;` 可以展示指定数据库下某个表的数据量、副本数和统计行数。

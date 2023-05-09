@@ -39,7 +39,7 @@ StarRocksManager 的监控可以分成 **集群** 和 **节点** 两个维度。
 
 ## 使用 Prometheus+Grafana
 
-您可以使用 [Prometheus](https://prometheus.io/) 作为 StarRocks 监控数据存储方案，并使用[Grafana](https://grafana.com/) 作为可视化组件。
+您可以使用 [Prometheus](https://prometheus.io/) 作为 StarRocks 监控数据存储方案，并使用 [Grafana](https://grafana.com/) 作为可视化组件。
 
 Prometheus 是一个拥有多维度数据模型的、灵活的查询语句的时序数据库。它可以通过 Pull 或 Push 采集被监控系统的监控项，存入自身的时序数据库中。并且通过丰富的多维数据查询语言，满足用户的不同需求。
 
@@ -107,7 +107,7 @@ scrape_configs:
 
 #### 启动 Prometheus
 
-通过一下命令启动 Prometheus。
+通过以下命令启动 Prometheus。
 
 ```bash
 nohup ./prometheus \
@@ -151,7 +151,7 @@ wget https://dl.grafana.com/oss/release/grafana-8.0.6.linux-amd64.tar.gz
 tar -zxf grafana-8.0.6.linux-amd64.tar.gz
 ```
 
-#### 配置 Prometheus
+#### 配置 Grafana
 
 在 **./conf/defaults.ini** 中添加相关的配置。
 
@@ -200,10 +200,11 @@ Data Source 配置项简介
 
 下载  Dashboard 模版。
 
-> 说明：StarRocks-1.19.0 版本及其之后的版本监控 Metric Name 有调整，需要下载下面 StarRocks-1.19.0+ 版本 DashBoard 模版。
+> 说明：StarRocks 1.19.0 和 2.4.0 版本的监控 Metric Name 有调整，需要下载下面对应版本 DashBoard 模版。
 
 * [StarRocks-1.19.0 之前版本 Dashboard 模版](http://starrocks-thirdparty.oss-cn-zhangjiakou.aliyuncs.com/StarRocks-Overview.json)
-* [StarRocks-1.19.0 及其之后版本 DashBoard 模版](http://starrocks-thirdparty.oss-cn-zhangjiakou.aliyuncs.com/StarRocks-Overview-19.json)
+* [StarRocks-1.19.0 开始到 StarRocks-2.4.0 之前版本 DashBoard 模版](http://starrocks-thirdparty.oss-cn-zhangjiakou.aliyuncs.com/StarRocks-Overview-19.json)
+* [StarRocks-2.4.0 及其之后版本 DashBoard 模版](http://starrocks-thirdparty.oss-cn-zhangjiakou.aliyuncs.com/StarRocks-Overview-24.json)
 
 > 说明：Dashboard 模版会不定期更新。同时我们也欢迎您提供更优的 Dashboard 模板。
 
@@ -356,7 +357,7 @@ Grafana 中，Row 代表一组图表的集合。如上图中的 Overview、Clust
 |starrocks_fe_query_resource_group_latency|秒|平均值|该资源组的查询延迟百分位数|
 |starrocks_fe_query_resource_group_err|个|累计值|该资源组中报错的查询任务的数量|
 |starrocks_be_resource_group_cpu_limit_ratio|百分比|瞬时值|该资源组 CPU 配额比率的瞬时值|
-|starrocks_be_resource_group_cpu_use_ratio|百分比|瞬时值|该资源组 CPU 使用率瞬时值|
+|starrocks_be_resource_group_cpu_use_ratio|百分比|平均值|该资源组 CPU 使用时间占所有资源组 CPU 时间的比率|
 |starrocks_be_resource_group_mem_limit_bytes|Byte|瞬时值|该资源组内存配额比率的瞬时值|
 |starrocks_be_resource_group_mem_allocated_bytes|Byte|瞬时值|该资源组内存使用率瞬时值|
 

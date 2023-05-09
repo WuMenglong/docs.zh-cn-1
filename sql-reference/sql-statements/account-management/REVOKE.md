@@ -13,7 +13,7 @@
 - 撤销某用户或某角色对数据库和表的指定权限。当撤销某角色的指定权限时，该角色必须存在。
 
     ```SQL
-    REVOKE privilege_list ON db_name[.tbl_name] FROM {user_identity | ROLE 'role_name'};
+    REVOKE privilege_list ON db_name[.tbl_name] FROM {user_identity | ROLE 'role_name'}
     ```
 
 - 撤销某用户或某角色对资源的指定权限。当撤销某角色的指定权限时，该角色必须存在。
@@ -42,7 +42,7 @@
 
 - `NODE_PRIV`：集群节点操作权限，如节点上下线。
 - `ADMIN_PRIV`：除 `NODE_PRIV` 以外的所有权限。
-- `GRANT_PRIV`：操作权限，如创建用户和角色、删除用户和角色、授权、撤权、和设置账户密码等。
+- `GRANT_PRIV`：操作权限，如创建用户和角色、删除用户和角色、授权、撤权和设置账户密码等。
 - `SELECT_PRIV`：数据库和表的读取权限。
 - `LOAD_PRIV`：数据库和表的导入权限。
 - `ALTER_PRIV`：数据库和表的结构变更权限。

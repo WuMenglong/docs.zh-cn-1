@@ -6,11 +6,11 @@ StarRocks 支持以外部表 (external table) 的形式，接入其他数据源�
 
 ## MySQL 外部表
 
-星型模型中，数据一般划分为维度表和事实表。维度表数据量少，但会涉及 UPDATE 操作。目前 StarRocks 中还不直接支持 UPDATE 操作（可以通过 Unique/Primary 数据模型实现），在一些场景下，可以把维度表存储在 MySQL 中，查询时直接读取维度表。
+星型模型中，数据一般划分为维度表 (dimension table) 和事实表 (fact table)。维度表数据量少，但会涉及 UPDATE 操作。目前 StarRocks 中还不直接支持 UPDATE 操作（可以通过 Unique/Primary 数据模型实现），在一些场景下，可以把维度表存储在 MySQL 中，查询时直接读取维度表。
 
 <br/>
 
-在使用 MySQL 的数据之前，需在 StarRocks 创建外部表，与之相映射。StarRocks 中创建 MySQL 外部表时需要指定 MySQL 的相关连接信息，如下所示。
+在使用 MySQL 的数据之前，需在 StarRocks 创建外部表 (CREATE EXTERNAL TABLE)，与之相映射。StarRocks 中创建 MySQL 外部表时需要指定 MySQL 的相关连接信息，如下所示。
 
 ~~~sql
 CREATE EXTERNAL TABLE mysql_external_table
@@ -117,6 +117,8 @@ insert into external_t select * from other_table;
 
 ### 建表示例
 
+#### 语法
+
 ~~~sql
 CREATE EXTERNAL TABLE elastic_search_external_table
 (
@@ -127,33 +129,135 @@ CREATE EXTERNAL TABLE elastic_search_external_table
     k5 DATETIME
 )
 ENGINE=ELASTICSEARCH
-PARTITION BY RANGE(k1)
-()
 PROPERTIES 
 (
-    "hosts" = "http://192.168.0.1:8200,http://192.168.0.2:8200",
+    "hosts" = "http://192.168.0.1:9200,http://192.168.0.2:9200",
     "user" = "root",
     "password" = "root",
     "index" = "tindex",
-    "type" = "doc",
+    "type" = "_doc",
     "es.net.ssl" = "true"
 );
 ~~~
 
-参数说明：
+#### 参数说明
 
-* `hosts`：Elasticsearch 集群连接地址，用于获取 Elasticsearch 版本号以及索引的分片分布信息，可指定一个或多个。StarRocks 是根据 `GET /_nodes/http` API 返回的地址和 Elasticsearch 集群进行通讯，所以 `hosts` 参数值必须和 `GET /_nodes/http` 返回的地址一致，否则可能导致 BE 无法和 Elasticsearch 集群进行正常的通讯。
-* `user`：开启 basic 认证的 Elasticsearch 集群的用户名，需要确保该用户有访问 **/*cluster/state/* nodes/http** 等路径权限和对索引的读取权限。
-* `password`：对应用户的密码信息。
-* `index`：StarRocks 中的表对应的 Elasticsearch 的索引名字，可以是索引的别名。
-* `type`：指定索引的类型，默认是 `_doc`。如果您要查询的是数据是在 Elasticsearch 8 及以上版本，那么在 StarRocks 中创建外部表时就不需要配置该参数，因为 Elasticsearch 8 以及上版本已经移除了 mapping types。
-* `transport`：内部保留，默认为 `http`。
-* `es.nodes.wan.only`：表示 StarRocks 是否仅使用 `hosts` 指定的地址，去访问 Elasticsearch 集群并获取数据。自 2.3.0 版本起，StarRocks 支持配置该参数。
-  * `true`：StarRocks 仅使用 `hosts` 指定的地址去访问 Elasticsearch 集群并获取数据，不会探测 Elasticsearch 集群的索引每个分片所在的数据节点地址。如果 StarRocks 无法访问 Elasticsearch 集群内部数据节点的地址，则需要配置为 `true`。
-  * `false`：默认值，StarRocks 通过 `hosts` 中的地址，探测 Elasticsearch 集群索引各个分片所在数据节点的地址。StarRocks 经过查询规划后，相关 BE 节点会直接去请求 Elasticsearch 集群内部的数据节点，获取索引的分片数据。如果 StarRocks 可以访问 Elasticsearch 集群内部数据节点的地址，则建议保持默认值 `false`。
-* `es.net.ssl`：是否允许使用 HTTPS 协议访问 Elasticsearch 集群。自 2.4 版本起，StarRocks 支持配置该参数。
-  * `true`：允许，HTTP 协议和 HTTPS 协议均可访问。
-  * `false`：不允许，只能使用 HTTP 协议访问。
+| **参数**             | **是否必须** | **默认值** | **说明**                                                     |
+| -------------------- | ------------ | ---------- | ------------------------------------------------------------ |
+| hosts                | 是           | 无         | Elasticsearch 集群连接地址，用于获取 Elasticsearch 版本号以及索引的分片分布信息，可指定一个或多个。StarRocks 是根据 `GET /_nodes/http` API 返回的地址和 Elasticsearch 集群进行通讯，所以 `hosts` 参数值必须和 `GET /_nodes/http` 返回的地址一致，否则可能导致 BE 无法和 Elasticsearch 集群进行正常的通讯。 |
+| index                | 是           | 无         | StarRocks 中的表对应的 Elasticsearch 的索引名字，可以是索引的别名。支持通配符匹配，比如设置 `index` 为 `hello*`，则 StarRocks 会匹配到所有以 `hello` 开头的索引。 |
+| user                 | 否           | 空         | 开启 basic 认证的 Elasticsearch 集群的用户名，需要确保该用户有访问 /*cluster/state/* nodes/http 等路径权限和对索引的读取权限。 |
+| password             | 否           | 空         | 对应用户的密码信息。                                         |
+| type                 | 否           | `_doc`     | 指定索引的类型。如果您要查询的是数据是在 Elasticsearch 8 及以上版本，那么在 StarRocks 中创建外部表时就不需要配置该参数，因为 Elasticsearch 8 以及上版本已经移除了 mapping types。 |
+| es.nodes.wan.only    | 否           | `false`    | 表示 StarRocks 是否仅使用 `hosts` 指定的地址，去访问 Elasticsearch 集群并获取数据。自 2.3.0 版本起，StarRocks 支持配置该参数。<ul><li>`true`：StarRocks 仅使用 `hosts` 指定的地址去访问 Elasticsearch 集群并获取数据，不会探测 Elasticsearch 集群的索引每个分片所在的数据节点地址。如果 StarRocks 无法访问 Elasticsearch 集群内部数据节点的地址，则需要配置为 `true`。</li><li>`false`：StarRocks 通过 `hosts` 中的地址，探测 Elasticsearch 集群索引各个分片所在数据节点的地址。StarRocks 经过查询规划后，相关 BE 节点会直接去请求 Elasticsearch 集群内部的数据节点，获取索引的分片数据。如果 StarRocks 可以访问 Elasticsearch 集群内部数据节点的地址，则建议保持默认值 `false`。</li></ul> |
+| es.net.ssl           | 否           | `false`    | 是否允许使用 HTTPS 协议访问 Elasticsearch 集群。自 2.4 版本起，StarRocks 支持配置该参数。<ul><li>`true`：允许，HTTP 协议和 HTTPS 协议均可访问。</li><li>`false`：不允许，只能使用 HTTP 协议访问。</li></ul> |
+| enable_docvalue_scan | 否           | `true`     | 是否从 Elasticsearch 列式存储获取查询字段的值。多数情况下，从列式存储中读取数据的性能要优于从行式存储中读取数据的性能。 |
+| enable_keyword_sniff | 否           | `true`     | 是否对 Elasticsearch 中 TEXT 类型的字段进行探测，通过 KEYWORD 类型字段进行查询。设置为 `false` 会按照分词后的内容匹配。默认值：`true`。 |
+
+##### 启用列式扫描优化查询速度
+
+如果设置 `enable_docvalue_scan` 为 `true`，StarRocks 从 Elasticsearch 中获取数据会遵循以下两条原则：
+
+* **尽力而为**: 自动探测要读取的字段是否开启列式存储。如果要获取的字段全部有列存，StarRocks 会从列式存储中获取所有字段的值。
+* **自动降级**: 如果要获取的字段中有任何一个字段没有列存，则 StarRocks 会从行存 `_source` 中解析获取所有字段的值。
+
+> **说明**
+>
+> * TEXT 类型的字段在 Elasticsearch 中没有列式存储。因此，如果要获取的字段值有 TEXT 类型字段时，会自动降级为从 `_source` 中获取。
+> * 在获取的字段数量过多（大于等于 25）的情况下，从 `docvalue` 中获取字段值的性能会和从 `_source` 中获取字段值基本一样。
+
+##### 探测 KEYWORD 类型字段
+
+如果设置 `enable_keyword_sniff` 为 `true`，在 Elasticsearch 中可以不建立索引直接进行数据导入，因为 Elasticsearch 会在数据导入完成后自动创建一个新的索引。针对字符串类型的字段，Elasticsearch 会创建一个既有 TEXT 类型又有 KEYWORD 类型的字段，这就是 Elasticsearch 的 Multi-Field 特性，Mapping 如下：
+
+~~~sql
+"k4": {
+   "type": "text",
+   "fields": {
+      "keyword": {   
+         "type": "keyword",
+         "ignore_above": 256
+      }
+   }
+}
+~~~
+
+对 `k4` 进行条件过滤（如 `=` 条件）时，StarRocks On Elasticsearch 会将查询转换为 Elasticsearch 的 TermQuery。
+
+原 SQL 过滤条件如下：
+
+~~~sql
+k4 = "StarRocks On Elasticsearch"
+~~~
+
+转换成 Elasticsearch 的查询 DSL 如下：
+
+~~~sql
+"term" : {
+    "k4": "StarRocks On Elasticsearch"
+
+}
+~~~
+
+由于 `k4` 的第一字段类型为 TEXT，在数据导入时 StarRocks 会根据 `k4` 设置的分词器（如果没有设置分词器，则默认使用 `standard` 分词器）进行分词处理得到 `StarRocks`、`On`、`Elasticsearch` 三个 `term`，如下所示：
+
+~~~sql
+POST /_analyze
+{
+  "analyzer": "standard",
+  "text": "StarRocks On Elasticsearch"
+}
+~~~
+
+分词的结果如下：
+
+~~~sql
+{
+   "tokens": [
+      {
+         "token": "starrocks",
+         "start_offset": 0,
+         "end_offset": 5,
+         "type": "<ALPHANUM>",
+         "position": 0
+      },
+      {
+         "token": "on",
+         "start_offset": 6,
+         "end_offset": 8,
+         "type": "<ALPHANUM>",
+         "position": 1
+      },
+      {
+         "token": "elasticsearch",
+         "start_offset": 9,
+         "end_offset": 11,
+         "type": "<ALPHANUM>",
+         "position": 2
+      }
+   ]
+}
+~~~
+
+假设执行如下查询：
+
+~~~sql
+"term" : {
+    "k4": "StarRocks On Elasticsearch"
+}
+~~~
+
+`StarRocks On Elasticsearch` 这个 `term` 匹配不到词典中的任何 `term`，不会返回任何结果，而设置 `enable_keyword_sniff` 为 `true` 以后，StarRocks 会自动将 `k4 = "StarRocks On Elasticsearch"` 转换成 `k4.keyword = "StarRocks On Elasticsearch"` 来完全匹配  SQL语义。转换后的 Elasticsearch 查询 DSL 如下：
+
+~~~sql
+"term" : {
+    "k4.keyword": "StarRocks On Elasticsearch"
+}
+~~~
+
+`k4.keyword` 的类型是 KEYWORD，数据写入Elasticsearch 是一个完整的 `term`，因此可以在词典中找到匹配的结果。
+
+#### 映射关系
 
 创建外部表时，需根据 Elasticsearch 的字段类型指定 StarRocks 中外部表的列类型，具体映射关系如下：
 
@@ -300,22 +404,28 @@ properties (
 
 * `jdbc_uri`：JDBC 驱动程序连接目标数据库的 URI，需要满足目标数据库 URI 的语法。常见的目标数据库 URI，请参见 [MySQL](https://dev.mysql.com/doc/connector-j/8.0/en/connector-j-reference-jdbc-url-format.html)、[Oracle](https://docs.oracle.com/en/database/oracle/oracle-database/21/jjdbc/data-sources-and-URLs.html#GUID-6D8EFA50-AB0F-4A2B-88A0-45B4A67C361E)、[PostgreSQL](https://jdbc.postgresql.org/documentation/use/#connecting-to-the-database)、[SQL Server](https://docs.microsoft.com/en-us/sql/connect/jdbc/building-the-connection-url?view=sql-server-ver16) 官网文档。
 
-    > 说明：目标数据库 URI 中必须指定具体数据库的名称，如上示例中的 `jdbc_test`。
+    > **说明**
+    >
+    > 目标数据库 URI 中必须指定具体数据库的名称，如上示例中的 `jdbc_test`。
 
 * `driver_url`：用于下载 JDBC 驱动程序 JAR 包的 URL，支持使用 HTTP 协议 或者 file 协议。例如`https://repo1.maven.org/maven2/org/postgresql/postgresql/42.3.3/postgresql-42.3.3.jar`，`file:///home/disk1/postgresql-42.3.3.jar`。
 
-    > 说明：不同目标数据库使用的 JDBC 驱动程序不同，使用其他数据库的 JDBC 驱动程序会有不兼容的问题，建议访问目标数据库官网，查询并使用其支持的 JDBC 驱动程序。常见的目标数据库的  JDBC 驱动程序下载地址，请参见 [MySQL](https://dev.mysql.com/downloads/connector/j/)、[Oracle](https://www.oracle.com/database/technologies/maven-central-guide.html)、[PostgreSQL](https://jdbc.postgresql.org/download/)、[SQL Server](https://learn.microsoft.com/en-us/sql/connect/jdbc/download-microsoft-jdbc-driver-for-sql-server?view=sql-server-ver16) 。
+    > **说明**
+    >
+    > 不同目标数据库使用的 JDBC 驱动程序不同，使用其他数据库的 JDBC 驱动程序会有不兼容的问题，建议访问目标数据库官网，查询并使用其支持的 JDBC 驱动程序。常见的目标数据库的  JDBC 驱动程序下载地址，请参见 [MySQL](https://dev.mysql.com/downloads/connector/j/)、[Oracle](https://www.oracle.com/database/technologies/maven-central-guide.html)、[PostgreSQL](https://jdbc.postgresql.org/download/)、[SQL Server](https://learn.microsoft.com/en-us/sql/connect/jdbc/download-microsoft-jdbc-driver-for-sql-server?view=sql-server-ver16) 。
 
 * `driver_class`：JDBC 驱动程序的类名称。以下列举常见 JDBC 驱动程序的类名称：
 
-  * MySQL：com.mysql.jdbc.Driver（MySQL 5.x 及以下版本）、com.mysql.cj.jdbc.Driver （MySQL 8.x 及以上版本）
+  * MySQL: com.mysql.jdbc.Driver（MySQL 5.x 及以下版本）、com.mysql.cj.jdbc.Driver （MySQL 8.x 及以上版本）
   * SQL Server：com.microsoft.sqlserver.jdbc.SQLServerDriver
-  * Oracle： oracle.jdbc.driver.OracleDriver
+  * Oracle: oracle.jdbc.driver.OracleDriver
   * PostgreSQL：org.postgresql.Driver
 
 创建资源时，FE 通过 `driver_url` 下载 JDBC 驱动程序 JAR 包，生成 checksum 并保存起来，用于校验 BE 下载的 JDBC 驱动程序 JAR 包的正确性。
 
-> 说明：如果下载 JDBC 驱动程序失败，则创建资源也会失败。
+> **说明**
+>
+> 如果下载 JDBC 驱动程序失败，则创建资源也会失败。
 
 BE 节点首次查询 JDBC 外部表时，如果发现所在机器上不存在相应的 JDBC 驱动程序 JAR 包，则会通过 `driver_url` 进行下载，所有的 JDBC 驱动程序 JAR 包都会保存在 **${STARROCKS_HOME}/lib/jdbc_drivers** 目录下。
 
@@ -323,7 +433,9 @@ BE 节点首次查询 JDBC 外部表时，如果发现所在机器上不存在�
 
 执行如下语句，查看 StarRocks 中的所有 JDBC 资源：
 
-> 说明：`ResourceType` 列为 `jdbc`。
+> **说明**
+>
+> `ResourceType` 列为 `jdbc`。
 
 ~~~SQL
 SHOW RESOURCES;
@@ -337,7 +449,9 @@ SHOW RESOURCES;
 DROP RESOURCE "jdbc0";
 ~~~
 
-> 说明：删除 JDBC 资源会导致使用该 JDBC 资源创建的 JDBC 外部表不可用，但目标数据库的数据并不会丢失。如果您仍需要通过 StarRocks 查询目标数据库的数据，可以重新创建 JDBC 资源和 JDBC 外部表。
+> **说明**
+>
+> 删除 JDBC 资源会导致使用该 JDBC 资源创建的 JDBC 外部表不可用，但目标数据库的数据并不会丢失。如果您仍需要通过 StarRocks 查询目标数据库的数据，可以重新创建 JDBC 资源和 JDBC 外部表。
 
 ### **创建数据库**
 
@@ -348,7 +462,9 @@ CREATE DATABASE jdbc_test;
 USE jdbc_test; 
 ~~~
 
-> 说明：库名无需与目标数据库的名称保持一致。
+> **说明**
+>
+> 库名无需与目标数据库的名称保持一致。
 
 ### **创建 JDBC 外部表**
 
@@ -372,16 +488,19 @@ properties (
 * `table`：目标数据库表名，必填项。
 
 支持的数据类型以及与 StarRocks 的数据类型映射关系，请参见[数据类型映射](#数据类型映射)。
-> 说明：
- >
- > * 不支持索引。
- > * 不支持通过 PARTITION BY、DISTRIBUTED BY 来指定数据分布规则。
+
+> **说明**
+>
+> * 不支持索引。
+> * 不支持通过 PARTITION BY、DISTRIBUTED BY 来指定数据分布规则。
 
 ### **查询 JDBC 外部表**
 
 查询 JDBC 外部表前，必须启用 Pipeline 引擎。
 
-> 说明：如果已经启用 Pipeline 引擎，则可跳过本步骤。
+> **说明**
+>
+> 如果已经启用 Pipeline 引擎，则可跳过本步骤。
 
 ~~~SQL
 set enable_pipeline_engine=true;
@@ -476,17 +595,17 @@ StarRocks 支持对目标表进行谓词下推，把过滤条件推给目标表�
 StarRocks 使用 Hive 资源来管理使用到的 Hive 集群相关配置，如 Hive Metastore 地址等，一个 Hive 资源对应一个 Hive 集群。创建 Hive 外表的时候需要指定使用哪个 Hive 资源。
 
 ~~~sql
--- 创建一个名为 hive0 的 Hive 资源
+-- 创建一个名为 hive0 的 Hive 资源。
 CREATE EXTERNAL RESOURCE "hive0"
 PROPERTIES (
   "type" = "hive",
   "hive.metastore.uris" = "thrift://10.10.44.98:9083"
 );
 
--- 查看 StarRocks 中创建的资源
+-- 查看 StarRocks 中创建的资源。
 SHOW RESOURCES;
 
--- 删除名为 hive0 的资源
+-- 删除名为 hive0 的资源。
 DROP RESOURCE "hive0";
 ~~~
 
@@ -512,7 +631,7 @@ PROPERTIES (
   "key" = "value"
 );
 
--- 例子：创建 hive0 资源对应的 Hive 集群中 rawdata 数据库下的 profile_parquet_p7 表的外表
+-- 例子：创建 hive0 资源对应的 Hive 集群中 rawdata 数据库下的 profile_parquet_p7 表的外表。
 CREATE EXTERNAL TABLE `profile_wos_p7` (
   `id` bigint NULL,
   `first_id` varchar(200) NULL,
@@ -564,16 +683,16 @@ PROPERTIES (
 
 说明：
 
-* Hive 表 Schema 变更 **不会自动同步**，需要在 StarRocks 中重建 Hive 外表。
 * 支持 Hive 的存储格式为 Parquet，ORC 和 CSV 格式。如果为 CSV 格式，则暂不支持使用引号作为转义字符。
 * 压缩格式支持 Snappy 和 LZ4。
+* Hive 外表可查询的最大字符串长度为 1 MB。超过 1 MB 时，查询设置成 Null。
 
 <br/>
 
 ### 查询 Hive 外表
 
 ~~~sql
--- 查询 profile_wos_p7 的总行数
+-- 查询 profile_wos_p7 的总行数。
 select count(*) from profile_wos_p7;
 ~~~
 
@@ -581,15 +700,15 @@ select count(*) from profile_wos_p7;
 
 ### 配置
 
-* fe 配置文件路径为 $FE_HOME/conf，如果需要自定义 hadoop 集群的配置可以在该目录下添加配置文件，例如：hdfs 集群采用了高可用的 nameservice，需要将 hadoop 集群中的 hdfs-site.xml 放到该目录下，如果 hdfs 配置了 viewfs，需要将 core-site.xml 放到该目录下。
-* be 配置文件路径为 $BE_HOME/conf，如果需要自定义 hadoop 集群的配置可以在该目录下添加配置文件，例如：hdfs 集群采用了高可用的 nameservice，需要将 hadoop 集群中的 hdfs-site.xml 放到该目录下，如果 hdfs 配置了 viewfs，需要将 core-site.xml 放到该目录下。
-* be 所在的机器也需要配置 JAVA_HOME，一定要配置成 jdk 环境，不能配置成 jre 环境
-* kerberos 支持
-  1. 在所有的 fe/be 机器上用 `kinit -kt keytab_path principal` 登录，该用户需要有访问 hive 和 hdfs 的权限。kinit 命令登录是有实效性的，需要将其放入 crontab 中定期执行。
-  2. 把 hadoop 集群中的 hive-site.xml/core-site.xml/hdfs-site.xml 放到 $FE_HOME/conf 下，把 core-site.xml/hdfs-site.xml 放到 $BE_HOME/conf 下。
-  3. 在 $FE_HOME/conf/fe.conf 文件中的 JAVA_OPTS/JAVA_OPTS_FOR_JDK_9 选项加上 -Djava.security.krb5.conf=/etc/krb5.conf，/etc/krb5.conf 是 krb5.conf 文件的路径，可以根据自己的系统调整。
-  4. 在 $BE_HOME/conf/be.conf 文件增加选项 JAVA_OPTS/JAVA_OPTS_FOR_JDK_9="-Djava.security.krb5.conf=/etc/krb5.conf"，其中 /etc/krb5.conf 是 krb5.conf 文件的路径，可以根据自己的系统调整。
-  5. resource 中的 uri 地址一定要使用域名，并且相应的 hive 和 hdfs 的域名与 ip 的映射都需要配置到 /etc/hosts 中。
+* FE 配置文件路径为 $FE_HOME/conf。如果需要自定义 Hadoop 集群的配置，可以在该目录下添加配置文件，例如：如果 HDFS 集群采用了高可用的 Nameservice，需要将 Hadoop 集群中的 hdfs-site.xml 放到该目录下；如果 HDFS 配置了 ViewFs，需要将 core-site.xml 放到该目录下。
+* BE 配置文件路径为 $BE_HOME/conf。如果需要自定义 Hadoop 集群的配置，可以在该目录下添加配置文件，例如：如果 HDFS 集群采用了高可用的 Nameservice，需要将 Hadoop 集群中的 hdfs-site.xml 放到该目录下；如果 HDFS 配置了 ViewFs，需要将 core-site.xml 放到该目录下。
+* BE 所在机器的启动脚本 $BE_HOME/bin/start_be.sh 中需要配置 JAVA_HOME，要配置成 JDK 环境，不能配置成 JRE 环境，比如 `export JAVA_HOME = <JDK 的绝对路径>`。
+* Kerberos 支持
+  1. 在所有的 FE/BE 机器上用 `kinit -kt keytab_path principal` 登录，该用户需要有访问 Hive 和 HDFS 的权限。kinit 命令登录是有实效性的，需要将其放入 crontab 中定期执行。
+  2. 把 Hadoop 集群中的 hive-site.xml/core-site.xml/hdfs-site.xml 放到 $FE_HOME/conf 下，把 core-site.xml/hdfs-site.xml 放到 $BE_HOME/conf 下。
+  3. 在 $FE_HOME/conf/fe.conf 文件中的 JAVA_OPTS 选项取值里添加 -Djava.security.krb5.conf=/etc/krb5.conf，其中 /etc/krb5.conf 是 krb5.conf 文件的路径，可以根据自己的系统调整。
+  4. 在 $BE_HOME/conf/be.conf 文件增加选项 JAVA_OPTS="-Djava.security.krb5.conf=/etc/krb5.conf"，其中 /etc/krb5.conf 是 krb5.conf 文件的路径，可以根据自己的系统调整。
+  5. resource 中的 uri 地址一定要使用域名，并且相应的 Hive 和 HDFS 的域名与 IP 的映射都需要配置到 /etc/hosts 中。
 
 #### AWS S3/Tencent Cloud COS支持
 
@@ -642,59 +761,59 @@ select count(*) from profile_wos_p7;
 
 #### Aliyun OSS 支持
 
-一. 在 $FE_HOME/conf/core-site.xml 中加入如下配置。
+1. 在 $FE_HOME/conf/core-site.xml 中加入如下配置。
 
-~~~xml
-<configuration>
-   <property>
-      <name>fs.oss.impl</name>
-      <value>org.apache.hadoop.fs.aliyun.oss.AliyunOSSFileSystem</value>
-   </property>
-   <property>
-      <name>fs.AbstractFileSystem.oss.impl</name>
-      <value>com.aliyun.emr.fs.oss.OSS</value>
-   </property>
-   <property>
-        <name>fs.oss.accessKeyId</name>
-        <value>xxx</value>
-    </property>
-    <property>
-        <name>fs.oss.accessKeySecret</name>
-        <value>xxx</value>
-    </property>
-    <property>
-        <name>fs.oss.endpoint</name>
-        <!-- 以下以北京地域为例，其他地域请根据实际情况替换。 -->
-        <value>oss-cn-beijing.aliyuncs.com</value>
-    </property>
-</configuration>
-~~~
+   ~~~xml
+   <configuration>
+      <property>
+         <name>fs.oss.impl</name>
+         <value>com.aliyun.jindodata.oss.JindoOssFileSystem</value>
+      </property>
+      <property>
+         <name>fs.AbstractFileSystem.oss.impl</name>
+         <value>com.aliyun.jindodata.oss.OSS</value>
+      </property>
+      <property>
+         <name>fs.oss.accessKeyId</name>
+         <value>xxx</value>
+      </property>
+      <property>
+         <name>fs.oss.accessKeySecret</name>
+         <value>xxx</value>
+      </property>
+      <property>
+         <name>fs.oss.endpoint</name>
+         <!-- 以下以北京地域为例，其他地域请根据实际情况替换。 -->
+         <value>oss-cn-beijing.aliyuncs.com</value>
+      </property>
+   </configuration>
+   ~~~
 
-* `fs.oss.accessKeyId` 指定阿里云账号或 RAM 用户的 AccessKey ID，获取方式，请参见 [获取 AccessKey](https://help.aliyun.com/document_detail/53045.htm?spm=a2c4g.11186623.0.0.128b4b7896DD4W#task968)。
-* `fs.oss.accessKeySecret` 指定阿里云账号或 RAM 用户的 AccessKey Secret，获取方式，请参见 [获取 AccessKey](https://help.aliyun.com/document_detail/53045.htm?spm=a2c4g.11186623.0.0.128b4b7896DD4W#task968)。
-* `fs.oss.endpoint` 指定相关 OSS Bucket 所在地域对应的 Endpoint。
+   * `fs.oss.accessKeyId` 指定阿里云账号或 RAM 用户的 AccessKey ID，获取方式，请参见 [获取 AccessKey](https://help.aliyun.com/document_detail/53045.htm?spm=a2c4g.11186623.0.0.128b4b7896DD4W#task968)。
+   * `fs.oss.accessKeySecret` 指定阿里云账号或 RAM 用户的 AccessKey Secret，获取方式，请参见 [获取 AccessKey](https://help.aliyun.com/document_detail/53045.htm?spm=a2c4g.11186623.0.0.128b4b7896DD4W#task968)。
+   * `fs.oss.endpoint` 指定相关 OSS Bucket 所在地域对应的 Endpoint。
     您可以通过以下方式查询 Endpoint：
 
-  * 根据 Endpoint 与地域的对应关系进行查找，请参见 [访问域名和数据中心](https://help.aliyun.com/document_detail/31837.htm#concept-zt4-cvy-5db)。
-  * 您可以登录 [阿里云 OSS 管理控制台](https://oss.console.aliyun.com/index?spm=a2c4g.11186623.0.0.11d24772leoEEg#/)，进入 Bucket 概览页，Bucket 域名 examplebucket.oss-cn-hangzhou.aliyuncs.com 的后缀部分 oss-cn-hangzhou.aliyuncs.com，即为该 Bucket 的外网 Endpoint。
+     * 根据 Endpoint 与地域的对应关系进行查找，请参见 [访问域名和数据中心](https://help.aliyun.com/document_detail/31837.htm#concept-zt4-cvy-5db)。
+     * 您可以登录 [阿里云 OSS 管理控制台](https://oss.console.aliyun.com/index?spm=a2c4g.11186623.0.0.11d24772leoEEg#/)，进入 Bucket 概览页，Bucket 域名 examplebucket.oss-cn-hangzhou.aliyuncs.com 的后缀部分 oss-cn-hangzhou.aliyuncs.com，即为该 Bucket 的外网 Endpoint。
 
-二. 在 $BE_HOME/conf/be.conf 中加入如下配置。
+2. 在 $BE_HOME/conf/be.conf 中加入如下配置。
 
-* `object_storage_access_key_id` 与 FE 端 core-site.xml 配置 `fs.oss.accessKeyId` 相同
-* `object_storage_secret_access_key` 与 FE 端 core-site.xml 配置 `fs.oss.accessKeySecret` 相同
-* `object_storage_endpoint` 与 FE 端 core-site.xml 配置 `fs.oss.endpoint` 相同
+   * `object_storage_access_key_id` 与 FE 端 core-site.xml 配置 `fs.oss.accessKeyId` 相同
+   * `object_storage_secret_access_key` 与 FE 端 core-site.xml 配置 `fs.oss.accessKeySecret` 相同
+   * `object_storage_endpoint` 与 FE 端 core-site.xml 配置 `fs.oss.endpoint` 相同
 
-三. 重启 FE，BE。
+3. 重启 FE，BE。
 
 ### 缓存更新
 
-Hive Table 的 Partition 统计信息以及 Partition 下面的文件信息可以缓存到 StarRocks FE 中，缓存的内存结构为 Guava LoadingCache。您可以在 fe.conf 文件中通过设置 `hive_meta_cache_refresh_interval_s` 参数修改缓存自动刷新的间隔时间（默认值为 `7200`，单位：秒），也可以通过设置 `hive_meta_cache_ttl_s` 参数修改缓存的失效时间（默认值为 `86400`，单位：秒）。修改后需重启 FE 生效。
+Hive Table 的 Partition 统计信息以及 Partition 下面的文件信息可以缓存到 StarRocks FE 中，缓存的内存结构为 Guava LoadingCache。您可以在 ·fe`conf` 文件中通过设置 `hive_meta_cache_refresh_interval_s` 参数修改缓存自动刷新的间隔时间（默认值为 `7200`，单位：秒），也可以通过设置 `hive_meta_cache_ttl_s` 参数修改缓存的失效时间（默认值为 `86400`，单位：秒）。修改后需重启 FE 生效。
 
 #### 手动更新元数据缓存
 
 * 手动刷新元数据信息：
-  1. hive 中新增或者删除分区时，需要刷新 **表** 的元数据信息：`REFRESH EXTERNAL TABLE hive_t`，其中 hive_t 是 starrocks 中的外表名称。
-  2. hive 中向某些 partition 中新增数据时，需要 **指定 partition** 进行刷新：`REFRESH EXTERNAL TABLE hive_t PARTITION ('k1=01/k2=02', 'k1=03/k2=04')`，其中 hive_t 是 starrocks 中的外表名称，'k1 = 01/k2 = 02'、 'k1 = 03/k2 = 04'是 hive 中的 partition 名称。
+  1. Hive 中新增或者删除分区时，需要刷新 **表** 的元数据信息：`REFRESH EXTERNAL TABLE hive_t`，其中 `hive_t` 是 StarRocks 中的外表名称。
+  2. Hive 中向某些 partition 新增数据时，需要 **指定 partition** 进行刷新：`REFRESH EXTERNAL TABLE hive_t PARTITION ('k1=01/k2=02', 'k1=03/k2=04')`，其中 `hive_t` 是 StarRocks 中的外表名称，'k1 = 01/k2 = 02'、 'k1 = 03/k2 = 04'是 hive 中的 partition 名称。
   3. 在执行 `REFRESH EXTERNAL TABLE hive_t` 命令时，StarRocks 会先检查 Hive 外部表中的列信息和 Hive Metastore 返回的 Hive 表中的列信息是否一致。若发现 Hive 表的 schema 有修改，如增加列或减少列，那么 StarRocks 会将修改的信息同步到 Hive 外部表。同步后，Hive 外部表的列顺序和 Hive 表的列顺序保持一致，且分区列为最后一列。
   
 #### 自动增量更新元数据缓存
@@ -745,7 +864,7 @@ Hive Table 的 Partition 统计信息以及 Partition 下面的文件信息可�
    | 参数值                             | 说明                                      | 默认值 |
    | --- | --- | ---|
    | enable_hms_events_incremental_sync | 是否开启元数据自动增量同步功能            | false |
-   | hms_events_polling_interval_ms     | StarRocks 拉取 Hive Metastore Event 事件间隔 | 5 秒 |
+   | hms_events_polling_interval_ms     | StarRocks 拉取 Hive Metastore Event 事件间隔 | 5000 毫秒 |
    | hms_events_batch_size_per_rpc      | StarRocks 每次拉取 Event 事件的最大数量      | 500 |
    | enable_hms_parallel_process_evens  | 对接收的 Events 是否并行处理                | true |
    | hms_process_events_parallel_num    | 处理 Events 事件的并发数                    | 4 |
@@ -759,6 +878,8 @@ Hive Table 的 Partition 统计信息以及 Partition 下面的文件信息可�
 ## Apache Iceberg 外部表
 
 如要查询 Iceberg 数据，需要在 StarRocks 中创建 Iceberg 外部表，并将外部表与需要查询的 Iceberg 表建立映射。
+
+自 2.1.0 版本起，StarRocks 支持通过外部表的方式查询 Iceberg 数据。
 
 ### 前提条件
 
@@ -781,7 +902,9 @@ Hive Table 的 Partition 统计信息以及 Partition 下面的文件信息可�
 * 如果使用 Hive metastore 作为 Iceberg 的元数据服务，则可以创建 catalog 类型为 `HIVE` 的资源。
 * 如果想要自定义 Iceberg 的元数据服务，则可以开发一个 custom catalog （即自定义 catalog），然后创建 catalog 类型为 `CUSTOM` 的资源。
 
-> 说明：仅 StarRocks 2.3 及以上版本支持创建 catalog 类型为 `CUSTOM` 的资源。
+> **说明**
+>
+> 仅 StarRocks 2.3 及以上版本支持创建 catalog 类型为 `CUSTOM` 的资源。
 
 **创建 catalog 类型为 `HIVE` 的资源**
 
@@ -849,7 +972,9 @@ DROP RESOURCE "iceberg0";
 CREATE DATABASE iceberg_test; 
 ~~~
 
-> 说明：该数据库名称不需要和待查询的 Iceberg 数据库名称保持一致。
+> **说明**
+>
+> 该数据库名称不需要和待查询的 Iceberg 数据库名称保持一致。
 
 #### 步骤三：创建 Iceberg 外部表
 
@@ -927,7 +1052,7 @@ select count(*) from iceberg_tbl;
 
 ## Apache Hudi 外表
 
-StarRocks 支持通过外表的方式查询 Hudi 数据湖中的数据，帮助您实现对数据湖的极速分析。本文介绍如何在 StarRock 创建外表，查询 Hudi 中的数据。
+从 2.2.0 版本开始，StarRocks 支持通过外表的方式查询 Hudi 数据湖中的数据，帮助您实现对数据湖的极速分析。本文介绍如何在 StarRock 创建外表，查询 Hudi 中的数据。
 
 ### 前提条件
 

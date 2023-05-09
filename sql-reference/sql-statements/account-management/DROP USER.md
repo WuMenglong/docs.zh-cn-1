@@ -8,7 +8,7 @@
 
 ```sql
  -- 命令
- DROP USER 'user_identity';
+ DROP USER 'user_identity'
 
  --参数说明
 user_identity:user@'host'
@@ -21,5 +21,5 @@ user_identity:user@'host'
 删除用户 jack@'192.%'。
 
 ```sql
-DROP USER 'jack'@'192.%'
+DROP USER 'jack'@'192.%';
 ```
